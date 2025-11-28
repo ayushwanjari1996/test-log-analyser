@@ -1,0 +1,51 @@
+# Log file structure definitions
+csv_schema:
+  default:
+    columns:
+      - timestamp
+      - severity
+      - module
+      - message
+      - entity_id
+    
+    timestamp_format: "%Y-%m-%d %H:%M:%S"
+    
+    severity_levels:
+      - DEBUG
+      - INFO
+      - WARN
+      - ERROR
+      - CRITICAL
+  
+  # Custom schema for specific log types
+  system_logs:
+    columns:
+      - time
+      - level
+      - component
+      - details
+      - cm_id
+    
+    timestamp_format: "%m/%d/%Y %H:%M:%S"
+
+# Chunking configuration
+chunking:
+  max_tokens: 4000
+  overlap_lines: 10
+  context_lines: 50
+  
+  # Chunk by entity context
+  entity_context:
+    before_lines: 25
+    after_lines: 25
+
+# LLM configuration
+llm:
+  model: "llama3.2"
+  base_url: "http://localhost:11434"
+  timeout: 30
+  max_retries: 3
+  
+  # Token limits
+  max_input_tokens: 4000
+  max_output_tokens: 1000

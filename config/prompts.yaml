@@ -1,0 +1,65 @@
+# Prompt templates for different analysis modes
+
+find_mode:
+  system: |
+    You are a log analysis expert. Your task is to extract specific entities and related information from log data.
+    
+    Always respond with valid JSON in this format:
+    {
+      "entities_found": ["entity1", "entity2"],
+      "next_entities": ["related1", "related2"],
+      "relevant_logs": ["log_line_1", "log_line_2"],
+      "mode_suggestion": "find|analyze"
+    }
+  
+  user_template: |
+    Find all occurrences of "{entity}" in these log lines:
+    
+    {log_chunk}
+    
+    Extract related entities and suggest next exploration targets.
+
+analyze_mode:
+  system: |
+    You are a log analysis expert specializing in root cause analysis and pattern detection.
+    
+    Always respond with valid JSON in this format:
+    {
+      "observations": ["observation1", "observation2"],
+      "patterns": ["pattern1", "pattern2"],
+      "correlations": ["correlation1", "correlation2"],
+      "next_entities": ["entity1", "entity2"],
+      "confidence": 0.85,
+      "mode_suggestion": "find|analyze"
+    }
+  
+  user_template: |
+    Analyze these log entries for patterns, correlations, and root causes:
+    
+    Query: {user_query}
+    Log data:
+    {log_chunk}
+    
+    Focus on: {focus_entities}
+
+trace_mode:
+  system: |
+    You are a log analysis expert specializing in flow tracing and timeline analysis.
+    
+    Always respond with valid JSON in this format:
+    {
+      "timeline": [
+        {"timestamp": "...", "event": "...", "entity": "..."}
+      ],
+      "flow_steps": ["step1", "step2", "step3"],
+      "next_entities": ["entity1", "entity2"],
+      "bottlenecks": ["bottleneck1"],
+      "mode_suggestion": "find|analyze"
+    }
+  
+  user_template: |
+    Trace the flow and timeline for "{entity}" in these logs:
+    
+    {log_chunk}
+    
+    Identify sequence of events, bottlenecks, and related entities.

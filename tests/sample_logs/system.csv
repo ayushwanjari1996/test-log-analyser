@@ -1,0 +1,48 @@
+timestamp,severity,module,message,entity_id
+2024-11-28 10:00:00,INFO,modem_mgr,Cable modem CM12345 registered successfully,CM12345
+2024-11-28 10:00:15,DEBUG,network,Processing request for MdId: 98765,98765
+2024-11-28 10:00:30,INFO,provisioning,Package bronze assigned to modem CM12345,CM12345
+2024-11-28 10:01:00,WARN,network,High latency detected for CM12345,CM12345
+2024-11-28 10:01:15,ERROR,modem_mgr,Failed to connect to modem CM12346,CM12346
+2024-11-28 10:01:30,INFO,network,MdId: 98765 channel bonding complete,98765
+2024-11-28 10:02:00,DEBUG,provisioning,Checking package status for CM12345,CM12345
+2024-11-28 10:02:15,INFO,network,CM12346 attempting reconnection,CM12346
+2024-11-28 10:02:30,CRITICAL,modem_mgr,Modem CM12346 unresponsive after 3 retries,CM12346
+2024-11-28 10:03:00,INFO,network,MAC address 00:11:22:33:44:55 detected,CM12345
+2024-11-28 10:03:15,DEBUG,modem_mgr,Polling CM12345 status - active,CM12345
+2024-11-28 10:03:30,WARN,network,Upstream noise detected on channel 4,
+2024-11-28 10:04:00,INFO,provisioning,MdId: 98765 upgraded to silver package,98765
+2024-11-28 10:04:15,ERROR,network,Timeout connecting to IP 192.168.1.100,CM12346
+2024-11-28 10:04:30,INFO,modem_mgr,CM12347 initialization started,CM12347
+2024-11-28 10:05:00,DEBUG,network,Downstream power levels acceptable for CM12345,CM12345
+2024-11-28 10:05:15,WARN,modem_mgr,CM12346 signal quality degraded,CM12346
+2024-11-28 10:05:30,INFO,provisioning,Configuration pushed to modem_id 98765,98765
+2024-11-28 10:06:00,ERROR,network,CM12346 dropped from network,CM12346
+2024-11-28 10:06:15,INFO,modem_mgr,CM12347 registration complete - MdId: 98766,CM12347
+2024-11-28 10:06:30,DEBUG,network,Heartbeat received from CM12345,CM12345
+2024-11-28 10:07:00,CRITICAL,modem_mgr,Network outage detected affecting 15 modems,
+2024-11-28 10:07:15,ERROR,network,CM12345 experiencing packet loss,CM12345
+2024-11-28 10:07:30,ERROR,network,CM12347 unable to reach CMTS,CM12347
+2024-11-28 10:08:00,INFO,modem_mgr,Initiating recovery procedure for affected modems,
+2024-11-28 10:08:15,WARN,network,CM12345 attempting channel switch,CM12345
+2024-11-28 10:08:30,INFO,provisioning,Emergency configuration applied to MdId: 98765,98765
+2024-11-28 10:09:00,INFO,modem_mgr,CM12345 recovered - now on channel 8,CM12345
+2024-11-28 10:09:15,WARN,network,CM12347 still attempting recovery,CM12347
+2024-11-28 10:09:30,ERROR,modem_mgr,CM12346 removed from active pool,CM12346
+2024-11-28 10:10:00,INFO,network,Network stabilized - 13 of 15 modems recovered,
+2024-11-28 10:10:15,INFO,modem_mgr,CM12347 successfully reconnected,CM12347
+2024-11-28 10:10:30,DEBUG,provisioning,Verifying package for CM12345 - status OK,CM12345
+2024-11-28 10:11:00,INFO,network,MdId: 98766 baseline configuration complete,98766
+2024-11-28 10:11:15,WARN,modem_mgr,CM12346 marked for maintenance,CM12346
+2024-11-28 10:11:30,INFO,network,All systems nominal,
+2024-11-28 10:12:00,DEBUG,modem_mgr,Routine health check - CM12345 excellent,CM12345
+2024-11-28 10:12:15,DEBUG,network,Traffic pattern normal for MdId: 98765,98765
+2024-11-28 10:12:30,INFO,provisioning,Daily sync completed for 32 modems,
+2024-11-28 10:13:00,INFO,modem_mgr,CM12348 new registration request,CM12348
+2024-11-28 10:13:15,DEBUG,network,Allocating resources for CM12348,CM12348
+2024-11-28 10:13:30,INFO,provisioning,Package gold assigned to CM12348 - MdId: 98767,CM12348
+2024-11-28 10:14:00,INFO,network,CM12348 online and operational,CM12348
+2024-11-28 10:14:15,DEBUG,modem_mgr,Monitoring 45 active cable modems,
+2024-11-28 10:14:30,INFO,network,Bandwidth utilization: 67%,
+2024-11-28 10:15:00,INFO,modem_mgr,System health check complete,
+

@@ -1,0 +1,24 @@
+# CLI Framework
+click>=8.1.0
+
+# HTTP Client for Ollama
+requests>=2.31.0
+
+# Configuration Management
+pyyaml>=6.0
+
+# Data Processing
+pandas>=2.0.0
+
+# CLI Formatting & Progress
+rich>=13.0.0
+
+# Development Dependencies
+pytest>=7.4.0
+black>=23.0.0
+flake8>=6.0.0
+mypy>=1.5.0
+
+# Optional: Type hints
+types-requests>=2.31.0
+types-PyYAML>=6.0.0
