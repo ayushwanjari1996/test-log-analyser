@@ -13,6 +13,18 @@ aliases:
     - "ModemId"
     - "md-id"
   
+  rpdname:
+    - "rpd_name"
+    - "rpd name"
+    - "RpdName"
+    - "RPD"
+  
+  sf_id:
+    - "service_flow_id"
+    - "service flow id"
+    - "SfId"
+    - "SFID"
+  
   # Package/Service mappings
   package:
     - "pkg"
@@ -34,12 +46,21 @@ relationships:
     - md_id
     - mac_address
     - ip_address
+    - rpdname
+    - sf_id
   
   md_id:
     - cm
-    - rpd
+    - rpdname
     - package
     - downstream_channel
+    - sf_id
+  
+  rpdname:
+    - cm
+    - md_id
+    - ip_address
+    - sf_id
   
   package:
     - md_id
@@ -59,14 +80,26 @@ patterns:
     - "modem[_\\s]*(\\d+)"
   
   md_id:
+    - "\"MdId\"\\s*:\\s*\"(0x[0-9a-fA-F]+)\""
     - "MdId[:\\s]*(\\d+)"
     - "modem_id[:\\s]*(\\d+)"
+  
+  rpdname:
+    - "\"RpdName\"\\s*:\\s*\"([A-Z0-9]+)\""
+    - "RpdName[:\\s]*([A-Z0-9]+)"
+    - "rpd[_\\s]*name[:\\s]*([A-Z0-9]+)"
+  
+  sf_id:
+    - "\"SfIds\"\\s*:\\s*\\[\"(0x[0-9a-fA-F]+)\""
+    - "SfId[:\\s]*(0x[0-9a-fA-F]+)"
+    - "sf[_\\s]*id[:\\s]*(0x[0-9a-fA-F]+)"
   
   mac_address:
     - "([0-9A-Fa-f]{2}[:-]){5}([0-9A-Fa-f]{2})"
   
   ip_address:
     - "\\b(?:[0-9]{1,3}\\.){3}[0-9]{1,3}\\b"
+    - "\\b(?:[0-9a-fA-F]{1,4}:){7}[0-9a-fA-F]{1,4}\\b"
   
   timestamp:
     - "\\d{4}-\\d{2}-\\d{2}\\s\\d{2}:\\d{2}:\\d{2}"
