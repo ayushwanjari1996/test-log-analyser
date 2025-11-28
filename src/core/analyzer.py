@@ -103,15 +103,52 @@ class LogAnalyzer:
             query_type = parsed["query_type"]
             search_strategy = parsed.get("search_strategy", "direct")
             
-            # Smart correction: If there's a secondary entity with value and primary has no value,
-            # this is likely a relationship query (find A for B value)
+            # Smart corrections for misclassified queries
             secondary = parsed.get("secondary_entity")
             primary = parsed.get("primary_entity")
+            
+            # Correction 1: "find A for B value" pattern → relationship
             if (secondary and secondary.get("value") and 
                 primary and not primary.get("value") and 
                 query_type == "specific_value"):
                 logger.info("Correcting query type: specific_value → relationship (detected 'find A for B x' pattern)")
                 query_type = "relationship"
+            
+            # Correction 2: Analysis keywords → analysis
+            analysis_keywords = ["why", "analyse", "analyze", "debug", "investigate", "troubleshoot", "diagnose"]
+            if any(kw in query.lower() for kw in analysis_keywords):
+                if query_type != "analysis":
+                    logger.info(f"Correcting query type: {query_type} → analysis (detected analysis keyword)")
+                    query_type = "analysis"
+                
+                # Extract entity value from query using regex (MAC, IP, IDs, etc.)
+                import re
+                # Try to find MAC address
+                mac_match = re.search(r'([0-9a-fA-F]{2}[:-]){5}[0-9a-fA-F]{2}', query)
+                # Try to find IP address
+                ip_match = re.search(r'\b(?:[0-9]{1,3}\.){3}[0-9]{1,3}\b', query)
+                # Try to find hex ID
+                hex_match = re.search(r'0x[0-9a-fA-F]+', query)
+                # Try to find simple ID pattern
+                id_match = re.search(r'\b[A-Z0-9]{6,}\b', query)
+                
+                entity_value = None
+                if mac_match:
+                    entity_value = mac_match.group(0)
+                elif ip_match:
+                    entity_value = ip_match.group(0)
+                elif hex_match:
+                    entity_value = hex_match.group(0)
+                elif id_match:
+                    entity_value = id_match.group(0)
+                
+                if entity_value:
+                    logger.info(f"Extracted entity value from query: {entity_value}")
+                    # Update primary entity with the extracted value
+                    if primary:
+                        primary["value"] = entity_value
+                    else:
+                        parsed["primary_entity"] = {"type": "unknown", "value": entity_value, "reasoning": "Extracted from query"}
             
             logger.info(f"Step 3: Executing {query_type} query (strategy: {search_strategy})")
             
@@ -161,7 +198,25 @@ class LogAnalyzer:
         Example: "find cm CM12345"
         """
         entity = parsed["primary_entity"]
-        entity_value = entity["value"]
+        entity_value = entity.get("value")
+        
+        # If no value, try secondary entity
+        if not entity_value:
+            secondary = parsed.get("secondary_entity")
+            if secondary and secondary.get("value"):
+                entity_value = secondary["value"]
+                logger.info(f"Using secondary entity value: {entity_value}")
+        
+        if not entity_value:
+            return {
+                "query_type": "specific_value",
+                "entity": None,
+                "total_occurrences": 0,
+                "related_entities": {},
+                "sample_logs": [],
+                "success": False,
+                "error": "No entity value found in query"
+            }
         
         logger.info(f"Searching for specific value: {entity_value}")
         
@@ -297,7 +352,22 @@ class LogAnalyzer:
         Example: "why did cm x fail"
         """
         entity = parsed["primary_entity"]
-        entity_value = entity["value"]
+        entity_value = entity.get("value")
+        
+        # Fallback: if no value, try to extract from entity type or query
+        if not entity_value:
+            # Try secondary entity
+            secondary = parsed.get("secondary_entity")
+            if secondary and secondary.get("value"):
+                entity_value = secondary["value"]
+                logger.info(f"Using secondary entity value for analysis: {entity_value}")
+            else:
+                # Last resort: extract last meaningful word from query
+                import re
+                words = re.findall(r'\b(?:[0-9a-fA-F]{2}[:-]){5}[0-9a-fA-F]{2}\b|\b\S+\b', parsed["original_query"])
+                if words:
+                    entity_value = words[-1]
+                    logger.warning(f"Fallback: using '{entity_value}' from query for analysis")
         
         logger.info(f"Performing root cause analysis for: {entity_value}")
         
@@ -335,12 +405,22 @@ class LogAnalyzer:
             
             try:
                 response = self.llm_client.generate_json(user, system_prompt=system)
+                logger.debug(f"LLM response for chunk {i+1}: {response}")
                 parsed_response = self.response_parser.parse_analyze_response(response)
                 
-                all_observations.extend(parsed_response.get("observations", []))
-                all_patterns.extend(parsed_response.get("patterns", []))
+                obs = parsed_response.get("observations", [])
+                pat = parsed_response.get("patterns", [])
+                logger.info(f"Chunk {i+1}: {len(obs)} observations, {len(pat)} patterns")
+                
+                all_observations.extend(obs)
+                all_patterns.extend(pat)
             except Exception as e:
                 logger.error(f"LLM analysis failed for chunk {i+1}: {e}")
+                import traceback
+                traceback.print_exc()
+        
+        # Mark as success if we actually analyzed logs, even if no observations found
+        success = len(filtered) > 0 and len(chunks) > 0
         
         return {
             "query_type": "analysis",
@@ -349,7 +429,7 @@ class LogAnalyzer:
             "chunks_analyzed": min(3, len(chunks)),
             "observations": all_observations,
             "patterns": list(set(all_patterns)),  # Deduplicate
-            "success": len(all_observations) > 0 or len(all_patterns) > 0
+            "success": success
         }
     
     def _execute_trace(self, parsed: Dict) -> Dict[str, Any]:
