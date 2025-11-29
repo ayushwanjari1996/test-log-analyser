@@ -5,24 +5,42 @@ import sys
 from pathlib import Path
 sys.path.insert(0, str(Path(__file__).parent))
 
+# Configure logging FIRST with emoji=False before any imports
+import logging
+from rich.console import Console
+from rich.logging import RichHandler
+
+# Reconfigure root logger to use emoji=False
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(message)s",
+    handlers=[RichHandler(
+        console=Console(stderr=True, emoji=False),
+        show_time=True,
+        show_path=False,
+        markup=True
+    )],
+    force=True  # Force reconfiguration
+)
+
+# Now import our modules (they will use the reconfigured logger)
 from src.core.analyzer import LogAnalyzer
 from src.core.workflow_orchestrator import WorkflowOrchestrator
 from src.core.llm_query_parser import LLMQueryParser
 from src.core.log_processor import LogProcessor
 from src.core.entity_manager import EntityManager
 from src.llm.ollama_client import OllamaClient
-from rich.console import Console
 from rich.panel import Panel
 from rich import print_json
 from rich.table import Table
-import logging
 
 # Disable emoji parsing to prevent :ab: in MAC addresses from being converted to emojis
 console = Console(emoji=False)
 
 console.print(Panel.fit(
     "[bold white]Phase 4: Interactive Log Analyzer[/bold white]\n"
-    "[cyan]Ask questions in natural language[/cyan]",
+    "[cyan]Ask questions in natural language[/cyan]\n"
+    "[dim yellow]Note: If you see emojis in logs (e.g., 🆎), restart Python to reload logger[/dim yellow]",
     border_style="blue"
 ))
 

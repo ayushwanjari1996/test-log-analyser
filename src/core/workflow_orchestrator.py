@@ -292,6 +292,17 @@ class WorkflowOrchestrator:
                         query=context.original_query
                     )
                     context.add_entity(entity_type, value, priority)
+                    
+                    # If this is the target entity type we're looking for, mark as found
+                    if entity_type == context.target_entity_type and values:
+                        logger.info(f"✓ Found target entity '{entity_type}': {values}")
+                        context.answer_found = True
+                        if not context.answer:
+                            # Build a simple answer if none exists
+                            if len(values) == 1:
+                                context.answer = f"Found {entity_type}: {values[0]}"
+                            else:
+                                context.answer = f"Found {len(values)} {entity_type}(s): {', '.join(values[:3])}" + (f" (and {len(values)-3} more)" if len(values) > 3 else "")
         
         # Add errors
         if "errors" in result and result["errors"]:
@@ -314,6 +325,11 @@ class WorkflowOrchestrator:
     def _check_success(self, context: AnalysisContext, parsed: Dict) -> bool:
         """Check if success criteria met based on query intent."""
         
+        # If answer was explicitly found, we're done
+        if context.answer_found:
+            logger.info("✓ Success: answer_found is True")
+            return True
+        
         query_lower = context.original_query.lower()
         
         # For root cause queries - need to find errors or have an answer
@@ -335,6 +351,11 @@ class WorkflowOrchestrator:
         
         # For relationship queries - need to find the TARGET entity type
         if parsed.get("query_type") == "relationship":
+            # Check if answer was explicitly found
+            if context.answer_found:
+                logger.info(f"✓ Answer found for relationship query")
+                return True
+            
             # Get what entity type user is looking for (primary entity)
             primary = parsed.get("primary_entity", {})
             target_type = primary.get("type")

@@ -139,8 +139,74 @@ With `emoji=False`, none of these are converted.
 
 ## Files Modified
 
-1. `test_interactive.py`
-   - Line 16: `console = Console()` → `console = Console(emoji=False)`
+### 1. `src/utils/validators.py`
+**Main Fix:**
+```python
+# BEFORE
+sanitized = re.sub(r'[^\w\-_.]', '', entity.strip())
+return sanitized[:50]
+
+# AFTER
+sanitized = re.sub(r'[^\w\-_.:.]', '', entity.strip())  # Added : for MAC/IPv6
+return sanitized[:100]  # Increased for IPv6
+```
+
+### 2. `src/utils/logger.py`
+**Logger Console:**
+```python
+# AFTER
+console_handler = RichHandler(
+    console=Console(stderr=True, emoji=False),  # Added emoji=False
+    show_time=True,
+    show_path=False,
+    markup=True
+)
+```
+
+### 3. `test_interactive.py`
+**Display Console + Logger Reconfiguration:**
+```python
+# Configure logging FIRST with emoji=False before any imports
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(message)s",
+    handlers=[RichHandler(
+        console=Console(stderr=True, emoji=False),
+        show_time=True,
+        show_path=False,
+        markup=True
+    )],
+    force=True  # Force reconfiguration
+)
+
+# Later...
+console = Console(emoji=False)
+```
+
+### 4. `src/core/workflow_orchestrator.py`
+**Answer Detection Fix:**
+```python
+# Added logic to set answer_found when target entity is discovered
+if entity_type == context.target_entity_type and values:
+    logger.info(f"✓ Found target entity '{entity_type}': {values}")
+    context.answer_found = True
+    if not context.answer:
+        # Build a simple answer if none exists
+        if len(values) == 1:
+            context.answer = f"Found {entity_type}: {values[0]}"
+        else:
+            context.answer = f"Found {len(values)} {entity_type}(s): {', '.join(values[:3])}" + ...
+```
+
+**Success Check Fix:**
+```python
+def _check_success(self, context: AnalysisContext, parsed: Dict) -> bool:
+    # If answer was explicitly found, we're done
+    if context.answer_found:
+        logger.info("✓ Success: answer_found is True")
+        return True
+    # ... rest of the checks
+```
 
 ---
 

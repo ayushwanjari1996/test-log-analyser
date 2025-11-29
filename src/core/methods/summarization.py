@@ -42,6 +42,9 @@ class SummarizationMethod(BaseMethod):
 ORIGINAL QUERY: "{context.original_query}"
 GOAL: {context.goal}
 
+ANSWER FOUND: {"YES - " + context.answer if context.answer_found else "NO"}
+{'ANSWER: "' + context.answer + '"' if context.answer else ''}
+
 ANALYSIS PROCESS:
 {context.get_step_history_summary()}
 
@@ -50,6 +53,8 @@ FINDINGS:
 - Entities discovered: {sum(len(v) for v in context.entities.values())}
 - Errors found: {len(context.errors_found)}
 - Patterns detected: {len(context.patterns)}
+- Target entity type: {context.target_entity_type or "N/A"}
+- Target entity found: {"YES" if context.target_entity_type and context.target_entity_type in context.entities else "NO"}
 
 ENTITIES DISCOVERED:
 {self._format_entities(context.entities)}
@@ -62,11 +67,15 @@ SAMPLE LOGS:
 
 Your task: Create a comprehensive summary that explains:
 1. What the user asked for
-2. What we found
+2. What we found (USE THE ANSWER IF PROVIDED ABOVE!)
 3. Key insights or timeline of events
-4. Status assessment (healthy/issues found)
+4. Status assessment:
+   - If ANSWER FOUND = YES → status should be "healthy" (unless errors were found)
+   - If target entity found → status should be "healthy"
+   - If errors found → status should be "error" or "critical"
+   - If no data/no answer → status should be "warning"
 5. Any errors or root causes discovered
-6. Recommendations or next steps
+6. Recommendations (only if answer NOT found or issues detected)
 
 Return JSON:
 {{
