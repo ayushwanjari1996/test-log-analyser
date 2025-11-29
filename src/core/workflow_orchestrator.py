@@ -168,13 +168,29 @@ class WorkflowOrchestrator:
     def _initialize_context(self, query: str, parsed: Dict) -> AnalysisContext:
         """Initialize analysis context from parsed query."""
         
+        # SMART CORRECTION 1: Override LLM if query contains analysis keywords
+        analysis_keywords = ["analyse", "analyze", "why", "debug", "investigate", "troubleshoot", "diagnose", "flow", "trace"]
+        if any(keyword in query.lower() for keyword in analysis_keywords):
+            if parsed.get("query_type") != "analysis":
+                logger.info(f"🔧 Smart correction: {parsed.get('query_type')} → analysis (detected keyword)")
+                parsed["query_type"] = "analysis"
+        
+        # SMART CORRECTION 2: Detect "find A for B" pattern → relationship query
+        import re
+        relationship_pattern = r'\bfind\s+(\w+)\s+for\s+(\w+)'
+        if re.search(relationship_pattern, query.lower()):
+            if parsed.get("query_type") != "relationship":
+                logger.info(f"🔧 Smart correction: {parsed.get('query_type')} → relationship (detected 'find A for B' pattern)")
+                parsed["query_type"] = "relationship"
+        
         # Determine intent
         query_type = parsed.get("query_type", "find")
         intent_map = {
             "specific_value": "find",
             "relationship": "find",
             "aggregation": "analyze",
-            "analysis": "root_cause"
+            "analysis": "analyze",  # Changed from "root_cause" to "analyze"
+            "trace": "analyze"
         }
         intent = intent_map.get(query_type, "find")
         
@@ -336,17 +352,40 @@ class WorkflowOrchestrator:
         if any(kw in query_lower for kw in ["why", "fail", "offline", "error", "crash"]):
             return len(context.errors_found) > 0 or context.answer_found
         
-        # For analysis queries - need logs and some analysis done
-        if any(kw in query_lower for kw in ["analyse", "analyze", "what happened", "timeline"]):
-            return context.logs_analyzed > 0 and (
-                len(context.patterns) > 0 or 
-                context.has_tried("timeline_analysis") or
-                context.has_tried("root_cause_analysis") or
-                context.iteration >= 2  # At least 2 iterations of analysis
-            )
+        # For analysis queries - need logs AND timeline/pattern analysis completed
+        if any(kw in query_lower for kw in ["analyse", "analyze", "what happened", "timeline", "flow", "trace"]):
+            if context.logs_analyzed == 0:
+                return False  # No logs found yet, keep searching
+            
+            # Must complete BOTH timeline and pattern analysis for thorough analysis
+            timeline_done = context.has_tried("timeline_analysis")
+            pattern_done = context.has_tried("pattern_analysis")
+            
+            if timeline_done and pattern_done:
+                logger.info("✓ Success: Analysis complete (timeline + pattern analysis done)")
+                return True
+            
+            # If we've done one, we should do the other before stopping
+            if context.iteration >= 5 and (timeline_done or pattern_done):
+                logger.info("✓ Success: Analysis mostly complete (timeout)")
+                return True
+            
+            return False  # Keep going until analysis is complete
         
-        # For specific value queries - finding logs is enough
+        # For specific value queries - CHECK if we found what we were looking for
         if parsed.get("query_type") == "specific_value":
+            # If user asked for a specific entity type, check if we found it
+            if context.target_entity_type:
+                if context.target_entity_type in context.entities:
+                    logger.info(f"✓ Found target '{context.target_entity_type}'")
+                    return True
+                else:
+                    # Found logs but not the target entity - keep searching
+                    if context.has_tried("iterative_search") and context.iteration >= 3:
+                        logger.info("✗ Target not found after iterative search")
+                        return True  # Give up
+                    return False  # Keep searching
+            # No specific target type - just finding logs is enough
             return context.logs_analyzed > 0
         
         # For relationship queries - need to find the TARGET entity type

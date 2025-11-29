@@ -40,40 +40,64 @@ class TimelineAnalysisMethod(BaseMethod):
         sorted_logs = sorted(logs, key=lambda x: x.get("timestamp", ""))
         
         # Build prompt for LLM
-        prompt = f"""Build a chronological timeline of key events from these logs:
+        prompt = f"""Build a DETAILED chronological timeline of events from these logs:
 
+TOTAL LOGS: {len(sorted_logs)}
+
+LOGS (chronologically sorted):
 {self._format_logs_for_llm(sorted_logs, limit=50)}
 
-Create a timeline showing:
-1. Timestamp of each significant event
-2. Event description (what happened)
-3. Entities involved
-4. Event type (normal/warning/error/critical)
-5. Impact or significance
+Your task: Create a COMPREHENSIVE timeline that tells the complete story of what happened.
 
-Focus on important state changes, errors, and significant activities.
-Group similar events if many repetitions.
+REQUIREMENTS:
+1. Include ALL significant events (don't skip important details)
+2. For each event, provide:
+   - Exact timestamp (HH:MM:SS.mmm format if available)
+   - Clear description of what happened (be specific, not vague)
+   - Which entities were involved (CM MAC, CPE MAC, MDID, etc.)
+   - Event type (normal/warning/error/critical)
+   - WHY this event matters in the overall flow
+   - Any state changes or transitions
+
+3. Group similar repetitive events (e.g., "5 CPE registration events between 15:30-15:32")
+4. Identify patterns in timing (bursts, delays, gaps)
+5. Note any anomalies or unexpected sequences
+6. Provide context for technical events (e.g., what "ProcEvAddCpe" means)
+
+DETAILED ANALYSIS:
+- What was the entity doing throughout this period?
+- Were there any errors or issues?
+- What was the flow/sequence of operations?
+- Any interesting patterns or anomalies?
+- What's the current state at the end?
 
 Return JSON:
 {{
   "timeline": [
     {{
-      "timestamp": "HH:MM:SS",
-      "event": "Description of what happened",
-      "entities": ["entity1", "entity2"],
+      "timestamp": "HH:MM:SS.mmm",
+      "event": "DETAILED description of what happened (be specific!)",
+      "entities": ["cm_mac:20:f1:9e:ff:bc:76", "cpe_mac:fc:ae:34:f2:3f:0d"],
       "type": "normal|warning|error|critical",
-      "significance": "Why this event matters"
+      "significance": "Why this event matters and how it fits in the overall flow",
+      "technical_details": "Any relevant technical context"
     }}
   ],
+  "flow_summary": "2-3 sentences describing the overall flow/story from start to end",
   "key_observations": [
-    "Overall observation about the timeline"
+    "Detailed observation about patterns, timing, or behavior",
+    "Another important observation with specifics"
+  ],
+  "anomalies": [
+    "Any unexpected behavior or issues detected"
   ],
   "event_summary": {{
     "total_events": 10,
     "errors": 2,
     "warnings": 1,
     "normal": 7
-  }}
+  }},
+  "current_state": "What's the final state/status of the entity at the end of the timeline?"
 }}
 """
         
@@ -94,8 +118,11 @@ Return JSON:
                 "timeline": timeline,
                 "duration": duration,
                 "event_distribution": distribution,
+                "flow_summary": response.get("flow_summary", ""),
                 "key_observations": response.get("key_observations", []),
-                "event_summary": response.get("event_summary", {})
+                "anomalies": response.get("anomalies", []),
+                "event_summary": response.get("event_summary", {}),
+                "current_state": response.get("current_state", "Unknown")
             }
         
         except Exception as e:

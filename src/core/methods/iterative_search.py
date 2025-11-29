@@ -40,15 +40,24 @@ class IterativeSearchMethod(BaseMethod):
         logger.info(f"Iterative search: {start_entity} → {target_type} (max_depth={max_depth})")
         
         # Import here to avoid circular dependency
-        from ..iterative_search import IterativeSearchStrategy
+        from ..iterative_search import IterativeSearchStrategy, set_llm_client
+        
+        # Set LLM client for smart bridge scoring
+        if self.llm_client:
+            set_llm_client(self.llm_client)
         
         # Read all logs
         all_logs = self.processor.read_all_logs()
         
-        # Create strategy instance
+        # Create strategy instance with enhanced limits
+        # Note: max_iterations is DEPTH (how many levels to traverse)
+        # Use fixed value of 5 instead of max_depth param which might be too small
         strategy = IterativeSearchStrategy(
             processor=self.processor,
-            max_iterations=max_depth
+            max_iterations=5,  # ✅ Fixed depth = 5 levels
+            max_bridges_per_iteration=3,
+            max_total_searches=20,
+            timeout_seconds=30
         )
         
         # Execute search

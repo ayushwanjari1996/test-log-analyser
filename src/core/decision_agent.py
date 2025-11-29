@@ -201,6 +201,15 @@ DECISION RULES:
 - If going in circles → try different method or 'summarization'
 - If exhausted options → 'summarization' and stop
 
+SPECIAL RULES FOR ANALYSIS QUERIES (intent="analyze", query contains "analyse/analyze/flow/trace"):
+- Step 1: Use 'direct_search' to find logs for the target entity
+- Step 2: ALWAYS use 'timeline_analysis' after finding logs (to show flow/sequence)
+- Step 3: ALWAYS use 'pattern_analysis' after timeline (to find patterns/anomalies)
+- Step 4: If errors found, use 'root_cause_analysis'
+- Step 5: Use 'summarization' to create detailed analysis report
+- DO NOT use 'iterative_search' unless absolutely necessary (analysis focuses on found logs, not finding more entities)
+- DO NOT stop after direct_search - we need to ANALYZE the logs, not just find them!
+
 IMPORTANT:
 - Do NOT hardcode entity values - use ACTUAL values from "ENTITIES DISCOVERED" above
 - When using entity values in params, use the FULL VALUE (e.g., "2c:ab:a4:47:1a:d2", NOT "1" or truncated)

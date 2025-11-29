@@ -37,35 +37,84 @@ class PatternAnalysisMethod(BaseMethod):
         logger.info(f"Analyzing patterns in {len(logs)} logs")
         
         # Build prompt for LLM
-        prompt = f"""Analyze these logs and identify patterns:
+        prompt = f"""Perform DETAILED pattern analysis on these logs:
 
+TOTAL LOGS: {len(logs)}
+
+LOGS TO ANALYZE:
 {self._format_logs_for_llm(logs, limit=50)}
 
-Your task:
-1. Identify repeated event sequences
-2. Detect timing patterns (regular intervals, bursts, gaps)
-3. Find state transitions (e.g., online→offline, active→idle)
-4. Discover common entity combinations (which entities appear together)
-5. Spot anomalies or unusual behavior
+Your task: Provide a COMPREHENSIVE analysis of patterns, behaviors, and anomalies.
 
-Return JSON:
+ANALYSIS REQUIREMENTS:
+
+1. **Message/Event Patterns:**
+   - What types of messages/events appear? (e.g., "ProcEvAddCpe", "ConfigChange")
+   - How frequently does each occur?
+   - Are there any sequences (A always followed by B)?
+   - Group similar events and count occurrences
+
+2. **Timing Patterns:**
+   - Regular intervals vs bursts vs continuous activity
+   - Time gaps between events (delays, timeouts?)
+   - Event rate (events per second/minute)
+   - Any timing anomalies (too fast, too slow, stuck)
+
+3. **Entity Behavior:**
+   - Which entities are active? (CM MACs, CPE MACs, MDIDs, etc.)
+   - What's the relationship between entities? (1 CM → multiple CPEs?)
+   - Entity state changes (registration, config, offline)
+   - Entity frequency (which entities appear most?)
+
+4. **State Transitions:**
+   - Lifecycle events (registration → active → offline)
+   - Configuration changes
+   - Error recovery sequences
+
+5. **Anomalies & Issues:**
+   - Repeated errors (same error multiple times)
+   - Missing expected events (e.g., no response after request)
+   - Unusual entity combinations
+   - Suspicious timing (rapid retries, stuck loops)
+   - Severity spikes (sudden ERROR after all INFO)
+
+6. **Statistical Summary:**
+   - Message type distribution (count each message type)
+   - Severity distribution (INFO, DEBUG, ERROR counts)
+   - Entity counts (how many unique CMs, CPEs, etc.)
+   - Time span coverage
+
+Return JSON with DETAILED findings:
 {{
   "patterns": [
     {{
-      "type": "repeated_sequence|timing|state_transition|entity_combination",
-      "description": "Human readable description",
-      "frequency": "how often this occurs",
-      "confidence": 0.0-1.0
+      "type": "message_frequency|timing|state_transition|entity_relationship|sequence",
+      "description": "DETAILED description with specifics (not vague)",
+      "details": "Additional context, examples, or evidence",
+      "frequency": "Exact count or rate (e.g., '18 occurrences', 'every 5 seconds')",
+      "entities_involved": ["cm_mac:20:f1:9e:ff:bc:76"],
+      "confidence": 0.9,
+      "significance": "Why this pattern matters"
     }}
   ],
   "anomalies": [
     {{
-      "description": "What's unusual",
+      "description": "SPECIFIC description of what's unusual",
+      "evidence": "What in the logs proves this is anomalous",
       "severity": "low|medium|high",
-      "affected_entities": ["entity1", "entity2"]
+      "affected_entities": ["entity1", "entity2"],
+      "recommendation": "What should be investigated or fixed"
     }}
   ],
-  "summary": "Brief overall summary of patterns found"
+  "statistics": {{
+    "message_types": {{"ProcEvAddCpe": 18, "ConfigChange": 6}},
+    "severity_distribution": {{"DEBUG": 20, "INFO": 3, "ERROR": 1}},
+    "entity_counts": {{"cm_mac": 1, "cpe_mac": 3, "md_id": 1}},
+    "time_span": "15:30:00 to 15:32:00",
+    "event_rate": "12 events per minute"
+  }},
+  "behavior_summary": "2-3 sentences describing the overall behavior observed in these logs",
+  "health_assessment": "healthy|warning|error - based on patterns detected"
 }}
 """
         
@@ -74,13 +123,16 @@ Return JSON:
             
             patterns = response.get("patterns", [])
             anomalies = response.get("anomalies", [])
+            statistics = response.get("statistics", {})
             
             logger.info(f"Found {len(patterns)} patterns, {len(anomalies)} anomalies")
             
             return {
                 "patterns": patterns,
                 "anomalies": anomalies,
-                "summary": response.get("summary", "")
+                "statistics": statistics,
+                "behavior_summary": response.get("behavior_summary", ""),
+                "health_assessment": response.get("health_assessment", "unknown")
             }
         
         except Exception as e:
