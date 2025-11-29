@@ -30,8 +30,9 @@ def setup_logger(
     
     # Console handler with rich formatting
     if rich_console:
+        # Disable emoji parsing to prevent :ab: in MAC addresses from being converted
         console_handler = RichHandler(
-            console=Console(stderr=True),
+            console=Console(stderr=True, emoji=False),
             show_time=True,
             show_path=False,
             markup=True

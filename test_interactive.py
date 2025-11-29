@@ -6,13 +6,19 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).parent))
 
 from src.core.analyzer import LogAnalyzer
+from src.core.workflow_orchestrator import WorkflowOrchestrator
+from src.core.llm_query_parser import LLMQueryParser
+from src.core.log_processor import LogProcessor
+from src.core.entity_manager import EntityManager
+from src.llm.ollama_client import OllamaClient
 from rich.console import Console
 from rich.panel import Panel
 from rich import print_json
 from rich.table import Table
 import logging
 
-console = Console()
+# Disable emoji parsing to prevent :ab: in MAC addresses from being converted to emojis
+console = Console(emoji=False)
 
 console.print(Panel.fit(
     "[bold white]Phase 4: Interactive Log Analyzer[/bold white]\n"
@@ -24,12 +30,17 @@ console.print(Panel.fit(
 console.print("\n[bold cyan]Select Mode:[/bold cyan]")
 console.print("  1. [green]Prod Mode[/green] - Clean output with reasoning (default)")
 console.print("  2. [yellow]Verbose Mode[/yellow] - Full debug logs")
-mode_input = console.input("\n[cyan]Enter mode (1 or 2):[/cyan] ").strip()
+console.print("  3. [magenta]Intelligent Mode[/magenta] - New self-orchestrating workflow")
+mode_input = console.input("\n[cyan]Enter mode (1, 2, or 3):[/cyan] ").strip()
 
 if mode_input == "2":
     mode = "verbose"
     logging.getLogger().setLevel(logging.DEBUG)
     console.print("[yellow]✓[/yellow] Verbose mode enabled - showing all logs\n")
+elif mode_input == "3":
+    mode = "intelligent"
+    logging.getLogger().setLevel(logging.INFO)  # Show workflow decisions
+    console.print("[magenta]✓[/magenta] Intelligent mode enabled - LLM-orchestrated workflow\n")
 else:
     mode = "prod"
     logging.getLogger().setLevel(logging.WARNING)  # Hide INFO/DEBUG
@@ -38,11 +49,25 @@ else:
 # Initialize analyzer
 if mode == "verbose":
     console.print("\n[yellow]→ Initializing LogAnalyzer...[/yellow]")
-analyzer = LogAnalyzer("test.csv", use_llm_parsing=True)
-if mode == "verbose":
-    console.print("[green]✓[/green] LogAnalyzer ready!\n")
+
+if mode == "intelligent":
+    console.print("\n[magenta]→ Initializing Intelligent Workflow Orchestrator...[/magenta]")
+    # Initialize components for intelligent mode
+    processor = LogProcessor("test.csv")
+    entity_manager = EntityManager()
+    llm_client = OllamaClient()
+    query_parser = LLMQueryParser(llm_client)
+    orchestrator = WorkflowOrchestrator(processor, entity_manager, llm_client)
+    console.print("[green]✓[/green] Orchestrator ready!\n")
+    analyzer = None  # Not using old analyzer
 else:
-    console.print("[dim]LogAnalyzer ready![/dim]\n")
+    analyzer = LogAnalyzer("test.csv", use_llm_parsing=True)
+    query_parser = None
+    orchestrator = None
+    if mode == "verbose":
+        console.print("[green]✓[/green] LogAnalyzer ready!\n")
+    else:
+        console.print("[dim]LogAnalyzer ready![/dim]\n")
 
 console.print("[yellow]Example queries:[/yellow]")
 console.print("  - find cm CM12345")
@@ -191,6 +216,104 @@ def print_prod_mode_result(result):
     console.print("="*60 + "\n")
 
 
+def print_intelligent_mode_result(result):
+    """Print intelligent workflow orchestrator result."""
+    console.print("\n" + "="*70)
+    
+    # Header
+    success = result.success
+    if success:
+        console.print(f"[bold green]✅ ANALYSIS COMPLETE[/bold green]")
+    else:
+        console.print(f"[bold yellow]⚠️  ANALYSIS COMPLETED (LIMITED RESULTS)[/bold yellow]")
+    
+    # Execution summary
+    console.print(f"\n[bold cyan]Workflow Summary:[/bold cyan]")
+    console.print(f"  • Iterations: {result.iterations}")
+    console.print(f"  • Logs analyzed: {result.logs_analyzed}")
+    console.print(f"  • Methods used: {', '.join(result.methods_used)}")
+    console.print(f"  • Confidence: {result.confidence:.0%}")
+    
+    # Show execution trace (LLM reasoning at each step)
+    if result.execution_trace:
+        console.print(f"\n[bold magenta]🧠 Decision Path:[/bold magenta]")
+        for trace in result.execution_trace:
+            iter_num = trace['iteration'] + 1
+            method = trace['method']
+            reasoning = trace['reasoning']
+            logs = trace['logs_found']
+            entities = trace['entities_found']
+            errors = trace['errors_found']
+            
+            console.print(f"\n  [cyan]Step {iter_num}:[/cyan] {method}")
+            console.print(f"    [dim]Reasoning:[/dim] {reasoning}")
+            console.print(f"    [dim]Results:[/dim] {logs} logs, {entities} entities, {errors} errors")
+    
+    # Main answer
+    console.print(f"\n[bold green]📊 Answer:[/bold green]")
+    console.print(f"  {result.answer}")
+    
+    # Summary details
+    summary = result.summary
+    if summary:
+        # Timeline
+        if summary.get("timeline"):
+            console.print(f"\n[bold cyan]⏱️  Timeline:[/bold cyan]")
+            for event in summary["timeline"][:5]:
+                time = event.get("time", event.get("timestamp", "??:??:??"))
+                evt = event.get("event", event.get("description", ""))
+                console.print(f"  • [{time}] {evt}")
+            if len(summary["timeline"]) > 5:
+                console.print(f"  [dim]... and {len(summary['timeline'])-5} more events[/dim]")
+        
+        # Causal chain
+        if summary.get("causal_chain"):
+            console.print(f"\n[bold yellow]🔗 Causal Chain:[/bold yellow]")
+            for i, step in enumerate(summary["causal_chain"], 1):
+                if isinstance(step, dict):
+                    entity = step.get("entity", "")
+                    event = step.get("event", "")
+                    console.print(f"  {i}. {entity} → {event}")
+                else:
+                    console.print(f"  {i}. {step}")
+        
+        # Key findings
+        if summary.get("key_findings"):
+            console.print(f"\n[bold cyan]🔍 Key Findings:[/bold cyan]")
+            for finding in summary["key_findings"][:5]:
+                console.print(f"  • {finding}")
+        
+        # Observations
+        if summary.get("observations"):
+            console.print(f"\n[bold cyan]💡 Observations:[/bold cyan]")
+            for obs in summary["observations"][:5]:
+                console.print(f"  • {obs}")
+        
+        # Recommendations
+        if summary.get("recommendations"):
+            console.print(f"\n[bold green]✨ Recommendations:[/bold green]")
+            for rec in summary["recommendations"][:3]:
+                console.print(f"  • {rec}")
+        
+        # Status
+        status = summary.get("status", "unknown")
+        if status == "healthy":
+            console.print(f"\n[bold green]Status:[/bold green] ✓ Healthy - No issues detected")
+        elif status == "warning":
+            console.print(f"\n[bold yellow]Status:[/bold yellow] ⚠ Warnings detected")
+        elif status in ["error", "critical"]:
+            console.print(f"\n[bold red]Status:[/bold red] ✗ Errors detected")
+    
+    # Entities found
+    if result.entities_found:
+        console.print(f"\n[bold cyan]🔗 Related Entities:[/bold cyan]")
+        for etype, values in list(result.entities_found.items())[:3]:
+            console.print(f"  • {etype}: {', '.join(values[:3])}{'...' if len(values) > 3 else ''}")
+    
+    console.print(f"\n[dim]Total execution time: {result.iterations} iterations[/dim]")
+    console.print("="*70 + "\n")
+
+
 while True:
     try:
         query = console.input("[bold cyan]❯[/bold cyan] ")
@@ -203,12 +326,17 @@ while True:
             console.print("\n[bold cyan]Switch Mode:[/bold cyan]")
             console.print("  1. [green]Prod Mode[/green] - Clean output")
             console.print("  2. [yellow]Verbose Mode[/yellow] - Full debug logs")
-            mode_input = console.input("[cyan]Enter mode (1 or 2):[/cyan] ").strip()
+            console.print("  3. [magenta]Intelligent Mode[/magenta] - Self-orchestrating workflow")
+            mode_input = console.input("[cyan]Enter mode (1, 2, or 3):[/cyan] ").strip()
             
             if mode_input == "2":
                 mode = "verbose"
                 logging.getLogger().setLevel(logging.DEBUG)
                 console.print("[yellow]✓[/yellow] Switched to verbose mode\n")
+            elif mode_input == "3":
+                mode = "intelligent"
+                logging.getLogger().setLevel(logging.INFO)
+                console.print("[magenta]✓[/magenta] Switched to intelligent mode\n")
             else:
                 mode = "prod"
                 logging.getLogger().setLevel(logging.WARNING)
@@ -220,16 +348,26 @@ while True:
         
         if mode == "verbose":
             console.print(f"\n[yellow]Processing:[/yellow] {query}")
+        elif mode == "intelligent":
+            console.print(f"\n[magenta]🧠 Analyzing:[/magenta] {query}")
         
-        result = analyzer.analyze_query(query)
-        
-        if mode == "prod":
-            print_prod_mode_result(result)
+        # Process query based on mode
+        if mode == "intelligent":
+            # Use new intelligent workflow orchestrator
+            parsed_query = query_parser.parse_query(query)
+            result = orchestrator.execute(query, parsed_query)
+            print_intelligent_mode_result(result)
         else:
-            # Verbose mode - show full JSON
-            console.print("\n[bold cyan]Result:[/bold cyan]")
-            print_json(data=result)
-            console.print()
+            # Use old analyzer
+            result = analyzer.analyze_query(query)
+            
+            if mode == "prod":
+                print_prod_mode_result(result)
+            else:
+                # Verbose mode - show full JSON
+                console.print("\n[bold cyan]Result:[/bold cyan]")
+                print_json(data=result)
+                console.print()
         
     except KeyboardInterrupt:
         console.print("\n[yellow]Goodbye![/yellow]")

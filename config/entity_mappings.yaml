@@ -13,6 +13,12 @@ aliases:
     - "ModemId"
     - "md-id"
   
+  cpe:
+    - "CPE"
+    - "customer premise equipment"
+    - "cpe_mac"
+    - "CpeMacAddress"
+  
   rpdname:
     - "rpd_name"
     - "rpd name"
@@ -56,6 +62,12 @@ relationships:
     - downstream_channel
     - sf_id
   
+  cpe:
+    - cm
+    - mac_address
+    - ip_address
+    - md_id
+  
   rpdname:
     - cm
     - md_id
@@ -84,10 +96,22 @@ patterns:
     - "MdId[:\\s]*(\\d+)"
     - "modem_id[:\\s]*(\\d+)"
   
+  cpe_mac:
+    - "\"CpeMacAddress\"\\s*:\\s*\"([0-9a-fA-F]{2}:[0-9a-fA-F]{2}:[0-9a-fA-F]{2}:[0-9a-fA-F]{2}:[0-9a-fA-F]{2}:[0-9a-fA-F]{2})\""
+    - "CpeMacAddress[:\\s]*([0-9a-fA-F]{2}:[0-9a-fA-F]{2}:[0-9a-fA-F]{2}:[0-9a-fA-F]{2}:[0-9a-fA-F]{2}:[0-9a-fA-F]{2})"
+  
+  cpe_ip:
+    - "\"CpeIpAddress\"\\s*:\\s*\"([0-9a-fA-F:]+)\""
+    - "CpeIpAddress[:\\s]*([0-9a-fA-F:]+)"
+  
+  cm_mac:
+    - "\"CmMacAddress\"\\s*:\\s*\"([0-9a-fA-F]{2}:[0-9a-fA-F]{2}:[0-9a-fA-F]{2}:[0-9a-fA-F]{2}:[0-9a-fA-F]{2}:[0-9a-fA-F]{2})\""
+    - "CmMacAddress[:\\s]*([0-9a-fA-F]{2}:[0-9a-fA-F]{2}:[0-9a-fA-F]{2}:[0-9a-fA-F]{2}:[0-9a-fA-F]{2}:[0-9a-fA-F]{2})"
+  
   rpdname:
-    - "\"RpdName\"\\s*:\\s*\"([A-Z0-9]+)\""
-    - "RpdName[:\\s]*([A-Z0-9]+)"
-    - "rpd[_\\s]*name[:\\s]*([A-Z0-9]+)"
+    - "\"RpdName\"\\s*:\\s*\"([A-Za-z0-9_-]+)\""
+    - "RpdName[:\\s]*([A-Za-z0-9_-]+)"
+    - "rpd[_\\s]*name[:\\s]*([A-Za-z0-9_-]+)"
   
   sf_id:
     - "\"SfIds\"\\s*:\\s*\\[\"(0x[0-9a-fA-F]+)\""

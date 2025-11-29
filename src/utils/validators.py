@@ -31,5 +31,6 @@ def validate_json_response(response: dict, required_fields: List[str]) -> bool:
 def sanitize_entity_name(entity: str) -> str:
     """Sanitize entity name for safe processing."""
     # Remove special characters, keep alphanumeric and common separators
-    sanitized = re.sub(r'[^\w\-_.]', '', entity.strip())
-    return sanitized[:50]  # Limit length
+    # Include : for MAC/IPv6 addresses
+    sanitized = re.sub(r'[^\w\-_.:.]', '', entity.strip())
+    return sanitized[:100]  # Limit length (increased for IPv6)

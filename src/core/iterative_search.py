@@ -249,8 +249,9 @@ class IterativeSearchStrategy:
         if len(filtered) == 0:
             return {"found": False, "values": [], "log_count": 0}
         
-        # Extract target entity from filtered logs
-        target_entities = self.processor.extract_entities(filtered, target_type)
+        # Extract target entity from filtered logs (ONLY from _source.log column)
+        search_columns = ["_source.log"] if "_source.log" in filtered.columns else None
+        target_entities = self.processor.extract_entities(filtered, target_type, search_columns=search_columns)
         
         if target_entities:
             return {
@@ -274,8 +275,9 @@ class IterativeSearchStrategy:
         if len(bridge_logs) == 0:
             return {"found": False, "values": [], "bridge_log_count": 0}
         
-        # Extract target from bridge logs
-        target_entities = self.processor.extract_entities(bridge_logs, target_type)
+        # Extract target from bridge logs (ONLY from _source.log column)
+        search_columns = ["_source.log"] if "_source.log" in bridge_logs.columns else None
+        target_entities = self.processor.extract_entities(bridge_logs, target_type, search_columns=search_columns)
         
         if target_entities:
             return {
@@ -301,14 +303,20 @@ class IterativeSearchStrategy:
         return logs[mask]
     
     def _extract_all_entity_types(self, logs: pd.DataFrame) -> Dict[str, List[str]]:
-        """Extract all entity types from logs."""
+        """
+        Extract all entity types from logs.
+        ONLY extracts from _source.log column to avoid infrastructure IPs/names.
+        """
         from ..utils.config import config
         
         all_entities = {}
         entity_types = list(config.entity_mappings.get("patterns", {}).keys())
         
+        # ONLY search in _source.log column (ignore CSV metadata like pod_ip, node_name)
+        search_columns = ["_source.log"] if "_source.log" in logs.columns else None
+        
         for etype in entity_types:
-            entities = self.processor.extract_entities(logs, etype)
+            entities = self.processor.extract_entities(logs, etype, search_columns=search_columns)
             if entities:
                 all_entities[etype] = list(entities.keys())
         
