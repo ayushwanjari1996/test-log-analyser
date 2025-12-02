@@ -228,15 +228,61 @@ class OllamaClient:
             temperature=temperature
         )
         
-        try:
-            parsed_json = json.loads(response_text)
+        # Try multiple parsing strategies
+        parsed_json = self._parse_json_response(response_text)
+        if parsed_json:
             logger.debug(f"Successfully parsed JSON response with {len(parsed_json)} keys")
             return parsed_json
+        
+        # If all strategies fail, raise error
+        logger.error(f"Failed to parse JSON response after all attempts")
+        logger.debug(f"Response text: {response_text[:500]}...")
+        raise LLMError(f"Could not parse JSON from LLM response")
+    
+    def _parse_json_response(self, response_text: str) -> Optional[Dict[str, Any]]:
+        """
+        Try multiple strategies to parse JSON from LLM response.
+        
+        Args:
+            response_text: Raw response from LLM
             
-        except json.JSONDecodeError as e:
-            logger.error(f"Failed to parse JSON response: {e}")
-            logger.debug(f"Response text: {response_text[:500]}...")
-            raise LLMError(f"Invalid JSON response from model: {e}")
+        Returns:
+            Parsed JSON dict or None if all strategies fail
+        """
+        # Strategy 1: Direct JSON parse
+        try:
+            return json.loads(response_text)
+        except json.JSONDecodeError:
+            pass
+        
+        # Strategy 2: Extract JSON from markdown code blocks
+        import re
+        json_pattern = r'```(?:json)?\s*(\{.*?\})\s*```'
+        matches = re.findall(json_pattern, response_text, re.DOTALL)
+        if matches:
+            try:
+                return json.loads(matches[0])
+            except json.JSONDecodeError:
+                pass
+        
+        # Strategy 3: Find first { to last } (might have extra text)
+        try:
+            start = response_text.index('{')
+            end = response_text.rindex('}') + 1
+            json_str = response_text[start:end]
+            return json.loads(json_str)
+        except (ValueError, json.JSONDecodeError):
+            pass
+        
+        # Strategy 4: Try to fix common issues (trailing commas, etc.)
+        try:
+            # Remove trailing commas before } or ]
+            cleaned = re.sub(r',\s*([}\]])', r'\1', response_text)
+            return json.loads(cleaned)
+        except json.JSONDecodeError:
+            pass
+        
+        return None
     
     def chat(
         self,

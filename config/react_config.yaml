@@ -1,0 +1,79 @@
+# ReAct Orchestrator Configuration
+
+react:
+  max_iterations: 10
+  tool_timeout_seconds: 30
+  max_logs_per_result: 1000
+  max_entities_per_result: 500
+  enable_caching: true
+  verbose_reasoning: true
+  max_escalation_levels: 2  # How far up entity hierarchy to escalate
+
+llm:
+  temperature: 0.3  # Lower for more consistent tool selection
+  max_tokens: 1000
+  model: llama3.2
+
+# Term normalization mappings for fuzzy search
+term_normalization:
+  registration:
+    - registration
+    - register
+    - registered
+    - registering
+    - reg
+  
+  error:
+    - error
+    - err
+    - fail
+    - failure
+    - exception
+    - critical
+    - fatal
+  
+  offline:
+    - offline
+    - down
+    - disconnected
+    - unreachable
+    - unavailable
+  
+  timeout:
+    - timeout
+    - timed out
+    - time-out
+    - timedout
+  
+  cm:
+    - cm
+    - cable modem
+    - modem
+    - cablemodem
+  
+  rpd:
+    - rpd
+    - remote phy device
+    - remote-phy
+
+# Entity hierarchy for smart escalation
+entity_hierarchy:
+  cpe:
+    parent: cm
+    related: [cpe_mac, cpe_ip]
+  
+  cm:
+    parent: rpdname
+    children: [cpe]
+    related: [cm_mac, md_id]
+  
+  rpdname:
+    parent: md_id
+    children: [cm]
+    related: [ip_address]
+  
+  md_id:
+    parent: cmts
+    children: [rpdname, cm]
+    related: [package, sf_id]
+
