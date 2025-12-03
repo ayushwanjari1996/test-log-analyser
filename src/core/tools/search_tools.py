@@ -23,8 +23,8 @@ class SearchLogsTool(Tool):
                 ToolParameter(
                     name="value",
                     param_type=ParameterType.STRING,
-                    description="Text to search for (entity value, keyword, etc.)",
-                    required=True,
+                    description="Text to search for (leave empty to get all logs)",
+                    required=False,
                     example="MAWED07T01"
                 ),
                 ToolParameter(
@@ -40,20 +40,24 @@ class SearchLogsTool(Tool):
         self._logs_cache = None
     
     def execute(self, **kwargs) -> ToolResult:
-        value = kwargs.get("value")
+        value = kwargs.get("value", "")
         columns = kwargs.get("columns")
         
         # Load logs if not cached
         if self._logs_cache is None:
             self._logs_cache = self.processor.read_all_logs()
         
-        # Search
-        if columns:
-            # Search specific columns only
-            result_df = self.processor.search_text(self._logs_cache, value, search_columns=columns)
+        # If no value provided or empty, return all logs
+        if not value or value.strip() == "":
+            result_df = self._logs_cache
         else:
-            # Search all columns
-            result_df = self.processor.search_text(self._logs_cache, value)
+            # Search for specific value
+            if columns:
+                # Search specific columns only
+                result_df = self.processor.search_text(self._logs_cache, value, search_columns=columns)
+            else:
+                # Search all columns
+                result_df = self.processor.search_text(self._logs_cache, value)
         
         count = len(result_df)
         
@@ -65,11 +69,12 @@ class SearchLogsTool(Tool):
                 metadata={"count": 0, "search_term": value}
             )
         
+        message = f"Found {count} logs" if not value or value.strip() == "" else f"Found {count} logs containing '{value}'"
         return ToolResult(
             success=True,
             data=result_df,
-            message=f"Found {count} logs containing '{value}'",
-            metadata={"count": count, "search_term": value}
+            message=message,
+            metadata={"count": count, "search_term": value if value else "all"}
         )
 
 
@@ -84,8 +89,8 @@ class FilterByTimeTool(Tool):
                 ToolParameter(
                     name="logs",
                     param_type=ParameterType.DATAFRAME,
-                    description="DataFrame of logs to filter",
-                    required=True
+                    description="DataFrame of logs to filter (auto-injected)",
+                    required=False
                 ),
                 ToolParameter(
                     name="start_time",
@@ -153,8 +158,8 @@ class FilterBySeverityTool(Tool):
                 ToolParameter(
                     name="logs",
                     param_type=ParameterType.DATAFRAME,
-                    description="DataFrame of logs to filter",
-                    required=True
+                    description="DataFrame of logs to filter (auto-injected)",
+                    required=False
                 ),
                 ToolParameter(
                     name="severities",
@@ -187,18 +192,45 @@ class FilterBySeverityTool(Tool):
                 break
         
         if not severity_col:
-            # No severity column, try to extract from log content
-            # For now, return empty result
-            return ToolResult(
-                success=True,
-                data=pd.DataFrame(),
-                message=f"No severity column found in logs",
-                metadata={"count": 0}
-            )
+            # No severity column, search in log content
+            # Look for severity patterns in the log text (case-insensitive)
+            import re
+            
+            def extract_severity_from_log(log_text):
+                """Extract severity from log content"""
+                if pd.isna(log_text):
+                    return None
+                log_str = str(log_text).upper()
+                # Match severity patterns in order of priority
+                for sev in ['ERROR', 'WARN', 'WARNING', 'INFO', 'DEBUG', 'TRACE', 'CRITICAL', 'FATAL']:
+                    # Match "Severity": "WARN" or Severity: WARN or [WARN] or (WARN)
+                    if re.search(rf'(?:severity["\s:]+|[\[\(]){sev}(?:["\s\]\)]|$)', log_str):
+                        return sev
+                return None
+            
+            # Extract severity from all log content columns
+            log_cols = [col for col in logs.columns if 'log' in col.lower() or 'message' in col.lower()]
+            if not log_cols:
+                return ToolResult(
+                    success=True,
+                    data=pd.DataFrame(),
+                    message=f"No severity column or log content found",
+                    metadata={"count": 0}
+                )
+            
+            # Try to extract severity from first log column (copy to avoid warning)
+            logs = logs.copy()
+            logs['_extracted_severity'] = logs[log_cols[0]].apply(extract_severity_from_log)
+            severity_col = '_extracted_severity'
         
         # Filter by matching any of the specified severities
         mask = logs[severity_col].astype(str).str.upper().isin([s.upper() for s in severities])
-        filtered = logs[mask]
+        filtered = logs[mask].copy()
+        
+        # Remove temporary severity column if we created it
+        if severity_col == '_extracted_severity' and '_extracted_severity' in filtered.columns:
+            filtered = filtered.drop(columns=['_extracted_severity'])
+        
         count = len(filtered)
         
         if count == 0:
@@ -228,8 +260,8 @@ class FilterByFieldTool(Tool):
                 ToolParameter(
                     name="logs",
                     param_type=ParameterType.DATAFRAME,
-                    description="DataFrame of logs to filter",
-                    required=True
+                    description="DataFrame of logs to filter (auto-injected)",
+                    required=False
                 ),
                 ToolParameter(
                     name="field",
@@ -302,8 +334,8 @@ class GetLogCountTool(Tool):
                 ToolParameter(
                     name="logs",
                     param_type=ParameterType.DATAFRAME,
-                    description="DataFrame of logs to count",
-                    required=True
+                    description="DataFrame of logs to count (auto-injected)",
+                    required=False
                 )
             ]
         )

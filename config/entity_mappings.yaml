@@ -6,24 +6,37 @@ aliases:
     - "modem"
     - "CM"
     - "cablemodem"
+    - "CmMacAddress"
+    - "cm_mac"
+    - "cm mac address"
+    - "CmIpAddress"
+    - "cm_ip_address"
+    - "cm ip address"
   
   md_id:
     - "MdId"
-    - "modem_id"
-    - "ModemId"
     - "md-id"
+    - "md_id"
+    - "mac domain id"
+    - "mac domain"
   
   cpe:
     - "CPE"
     - "customer premise equipment"
     - "cpe_mac"
     - "CpeMacAddress"
+    - "CpeIpAddress"
+    - "cpe_ip_address"
+    - "cpe ip address"
   
   rpdname:
     - "rpd_name"
     - "rpd name"
     - "RpdName"
     - "RPD"
+    - "RpdIpAddress"
+    - "rpd_ip_address"
+    - "rpd ip address"
   
   sf_id:
     - "service_flow_id"
@@ -50,8 +63,6 @@ aliases:
 relationships:
   cm:
     - md_id
-    - mac_address
-    - ip_address
     - rpdname
     - sf_id
   
@@ -64,14 +75,12 @@ relationships:
   
   cpe:
     - cm
-    - mac_address
-    - ip_address
     - md_id
+    - rpdname
   
   rpdname:
     - cm
     - md_id
-    - ip_address
     - sf_id
   
   package:

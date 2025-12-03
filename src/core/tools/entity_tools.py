@@ -21,8 +21,8 @@ class ExtractEntitiesTool(Tool):
                 ToolParameter(
                     name="logs",
                     param_type=ParameterType.DATAFRAME,
-                    description="DataFrame of logs to extract entities from",
-                    required=True
+                    description="DataFrame of logs to extract entities from (auto-injected)",
+                    required=False
                 ),
                 ToolParameter(
                     name="entity_types",
@@ -56,11 +56,16 @@ class ExtractEntitiesTool(Tool):
             )
         
         if not entity_types:
-            return ToolResult(
-                success=False,
-                data=None,
-                error="No entity types specified"
-            )
+            # Empty list means extract ALL entity types
+            from ...utils.config import config
+            patterns = config.entity_mappings.get('patterns', {})
+            entity_types = list(patterns.keys()) if patterns else []
+            if not entity_types:
+                return ToolResult(
+                    success=False,
+                    data=None,
+                    error="No entity types configured in entity_mappings.yaml"
+                )
         
         # Extract entities - only from _source.log column
         search_columns = ["_source.log"] if "_source.log" in logs.columns else None
@@ -121,8 +126,8 @@ class CountEntitiesTool(Tool):
                 ToolParameter(
                     name="logs",
                     param_type=ParameterType.DATAFRAME,
-                    description="DataFrame of logs",
-                    required=True
+                    description="DataFrame of logs (auto-injected)",
+                    required=False
                 ),
                 ToolParameter(
                     name="entity_type",
@@ -199,8 +204,8 @@ class AggregateEntitiesTool(Tool):
                 ToolParameter(
                     name="logs",
                     param_type=ParameterType.DATAFRAME,
-                    description="DataFrame of logs",
-                    required=True
+                    description="DataFrame of logs (auto-injected)",
+                    required=False
                 ),
                 ToolParameter(
                     name="entity_types",
@@ -289,8 +294,8 @@ class FindEntityRelationshipsTool(Tool):
                 ToolParameter(
                     name="logs",
                     param_type=ParameterType.DATAFRAME,
-                    description="DataFrame of logs",
-                    required=True
+                    description="DataFrame of logs (auto-injected)",
+                    required=False
                 ),
                 ToolParameter(
                     name="target_value",

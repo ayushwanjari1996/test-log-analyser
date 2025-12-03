@@ -1,353 +1,208 @@
-PS C:\Users\AYUSH\work\ai-stuff\test-AI-log-engine> python test_smart_architecture.py
+PS C:\Users\AYUSH\work\ai-stuff\test-AI-log-engine> python test_split_orchestrator.py
+╭──────────────────────────────────╮
+│ Split Orchestrator Tests         │
+│ Planning Agent + Execution Agent │
+╰──────────────────────────────────╯
+✓ Found test.csv
 
-=== Smart Architecture Test ===
-Zero hardcoding - Dynamic prompts from config only
-
-1. Initializing LLM...
-[12/02/25 16:50:16] INFO     Found 6 available models
-[12/02/25 16:50:16] INFO     Found 6 available models                                               ollama_client.py:104
-                    INFO     Auto-detected model: llama3.1:latest
-                    INFO     Auto-detected model: llama3.1:latest                                    ollama_client.py:48
-                    INFO     Initialized OllamaClient (base_url=http://localhost:11434, model=llama3.1:latest)
-                    INFO     Initialized OllamaClient (base_url=http://localhost:11434,              ollama_client.py:60
-                             model=llama3.1:latest)
-[12/02/25 16:50:18] INFO     Ollama health check passed. Available models: 6
-[12/02/25 16:50:18] INFO     Ollama health check passed. Available models: 6                         ollama_client.py:77
-   ✓ LLM: llama3.1:latest
-2. Creating tools...
-                    INFO     ToolRegistry initialized                                                tool_registry.py:27
+Initializing...
+[12/02/25 18:56:11] INFO     Initialized OllamaClient (base_url=http://localhost:11434, model=llama3.1:latest)
+  ✓ LLM: llama3.1:latest
                     INFO     Initialized LogProcessor for test.csv with schema 'default'
-                    INFO     Initialized LogProcessor for test.csv with schema 'default'             log_processor.py:47
                     INFO     Initialized EntityManager
-                    INFO     Initialized EntityManager                                             entity_manager.py:179
-                    INFO     Registered tool: search_logs                                            tool_registry.py:40
-                    INFO     Registered tool: filter_by_time                                         tool_registry.py:40
-                    INFO     Registered tool: filter_by_severity                                     tool_registry.py:40
-                    INFO     Registered tool: filter_by_field                                        tool_registry.py:40
-                    INFO     Registered tool: get_log_count                                          tool_registry.py:40
-                    INFO     Registered tool: extract_entities                                       tool_registry.py:40
-                    INFO     Registered tool: count_entities                                         tool_registry.py:40
-                    INFO     Registered tool: aggregate_entities                                     tool_registry.py:40
-                    INFO     Registered tool: find_entity_relationships                              tool_registry.py:40
-                    INFO     Registered tool: normalize_term                                         tool_registry.py:40
-                    INFO     Registered tool: fuzzy_search                                           tool_registry.py:40
-   ✓ Registered 11 tools
-3. Creating smart orchestrator...
-                    INFO     DynamicPromptBuilder initialized - zero hardcoding
-                    INFO     DynamicPromptBuilder initialized - zero hardcoding                    dynamic_prompts.py:23
-                    INFO     SmartOrchestrator initialized with 11 tools
-                    INFO     SmartOrchestrator initialized with 11 tools                        smart_orchestrator.py:53
-                    INFO     Using natural language interface - no JSON from LLM required
-                    INFO     Using natural language interface - no JSON from LLM required       smart_orchestrator.py:54
-   ✓ Orchestrator ready
-
+  ✓ Tools: 13 loaded
+  ✓ Registry: 13 registered
+                    INFO     PlanningAgent initialized
+                    INFO     ExecutionAgent initialized
+                    INFO     SplitOrchestrator initialized
+  ✓ Split Orchestrator ready
 
 ======================================================================
-Query 1: find all cms connected to rpd MAWED07T01
+SIMPLE TESTS
 ======================================================================
 
+======================================================================
+Query: count all logs
+======================================================================
                     INFO     ======================================================================
-                    INFO     ================================================================== smart_orchestrator.py:60
-                             ====
-                    INFO     SMART ORCHESTRATOR - Query: find all cms connected to rpd MAWED07T01
-                    INFO     SMART ORCHESTRATOR - Query: find all cms connected to rpd          smart_orchestrator.py:61
-                             MAWED07T01
+                    INFO     SPLIT ORCHESTRATOR - Query: count all logs
                     INFO     ======================================================================
-                    INFO     ================================================================== smart_orchestrator.py:62
-                             ====
                     INFO
-                             ──────────────────────────────────────────────────────────────────────
-                    INFO                                                                        smart_orchestrator.py:81
-                             ──────────────────────────────────────────────────────────────────
-                             ────
-                    INFO     📍 ITERATION 1
-                    INFO     📍 ITERATION 1                                                     smart_orchestrator.py:82
-                    INFO     ──────────────────────────────────────────────────────────────────────
-                    INFO     ────────────────────────────────────────────────────────────────── smart_orchestrator.py:83
-                             ────
-                    INFO     🤔 LLM is reasoning...
-                    INFO     🤔 LLM is reasoning...                                             smart_orchestrator.py:92
-[12/02/25 16:50:22] INFO     Generation successful: 203 chars, took 1.88s
-[12/02/25 16:50:22] INFO     Generation successful: 203 chars, took 1.88s                           ollama_client.py:178
-                    INFO     💡 Reasoning: User wants to find all CMs connected to rpd MAWED07T01, so first we need to
-                             search for logs containing this rpd name...
-                    INFO     💡 Reasoning: User wants to find all CMs connected to rpd         smart_orchestrator.py:109
-                             MAWED07T01, so first we need to search for logs containing this
-                             rpd name...
-                    INFO     🔧 Calling tool: search_logs
-                    INFO     🔧 Calling tool: search_logs                                      smart_orchestrator.py:135
-                    INFO     📋 Parameters: {'value': 'MAWED07T01'}
-                    INFO     📋 Parameters: {'value': 'MAWED07T01'}                            smart_orchestrator.py:136
+                             📋 PLANNING PHASE
+                    INFO     Planning for query: 'count all logs'
+[12/02/25 18:56:20] INFO     Generation successful: 93 chars, took 6.87s
+                    INFO     Created plan with 2 steps
+                    INFO       Step 1: search_logs {}
+                    INFO       Step 2: get_log_count {}
+                    INFO
+                             ⚙️  EXECUTION PHASE                                                                        
+                    INFO     Executing plan with 2 steps
+                    INFO
+                             ──────────────────────────────────────────────────
+                    INFO     Step 1/2: search_logs
+                    INFO     Parameters: {}
                     INFO     Loaded 2115 log entries
-                    INFO     Loaded 2115 log entries                                                 log_processor.py:88
-                    INFO     ✓ Tool succeeded: Found 3 logs containing 'MAWED07T01'
-                    INFO     ✓ Tool succeeded: Found 3 logs containing 'MAWED07T01'            smart_orchestrator.py:174
-                    INFO     📦 Cached 3 logs for subsequent tools
-                    INFO     📦 Cached 3 logs for subsequent tools                             smart_orchestrator.py:188
+                    INFO     ✓ Success: Found 2115 logs
+                    INFO     📦 Cached 2115 logs
                     INFO
-                             ──────────────────────────────────────────────────────────────────────
-                    INFO                                                                        smart_orchestrator.py:81
-                             ──────────────────────────────────────────────────────────────────
-                             ────
-                    INFO     📍 ITERATION 2
-                    INFO     📍 ITERATION 2                                                     smart_orchestrator.py:82
-                    INFO     ──────────────────────────────────────────────────────────────────────
-                    INFO     ────────────────────────────────────────────────────────────────── smart_orchestrator.py:83
-                             ────
-                    INFO     🤔 LLM is reasoning...
-                    INFO     🤔 LLM is reasoning...                                             smart_orchestrator.py:92
-[12/02/25 16:50:26] INFO     Generation successful: 218 chars, took 1.71s
-[12/02/25 16:50:26] INFO     Generation successful: 218 chars, took 1.71s                           ollama_client.py:178
-                    INFO     💡 Reasoning: Now that we've found logs containing MAWED07T01, let's extract CM MAC
-                             addresses from these logs to find all connected CMs...
-                    INFO     💡 Reasoning: Now that we've found logs containing MAWED07T01,    smart_orchestrator.py:109
-                             let's extract CM MAC addresses from these logs to find all
-                             connected CMs...
-                    INFO     🔧 Calling tool: extract_entities
-                    INFO     🔧 Calling tool: extract_entities                                 smart_orchestrator.py:135
-                    INFO     📋 Parameters: {'entity_types': ['cm_mac']}
-                    INFO     📋 Parameters: {'entity_types': ['cm_mac']}                       smart_orchestrator.py:136
-                    INFO     ✓ Auto-injected cached logs (3 rows) into extract_entities
-                    INFO     ✓ Auto-injected cached logs (3 rows) into extract_entities        smart_orchestrator.py:146
-                    INFO     Extracting 1 entity types from 3 log entries
-                    INFO     Extracting 1 entity types from 3 log entries                          entity_manager.py:285
+                             ──────────────────────────────────────────────────
+                    INFO     Step 2/2: get_log_count
+                    INFO     Parameters: {}
+                    INFO     ✓ Auto-injected 2115 cached logs
+                    INFO     ✓ Success: Log count: 2115
+                    INFO
+                             ======================================================================
+                    INFO     ✅ ANALYSIS COMPLETE
+                    INFO     Success: False
+                    INFO     Steps: 2/2
+                    INFO     Duration: 8.95s
+                    INFO     ======================================================================
+
+Result:
+  Success: False
+  Steps: 2/2
+  Duration: 8.95s
+  Confidence: 0.00
+
+Answer:
+╭──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╮
+│ Plan executed but no answer provided                                                                                 │
+╰──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
+✗ Missing keywords: 2115, logs
+
+======================================================================
+Query: search for logs with MAWED07T01
+======================================================================
+                    INFO     ======================================================================
+                    INFO     SPLIT ORCHESTRATOR - Query: search for logs with MAWED07T01
+                    INFO     ======================================================================
+                    INFO
+                             📋 PLANNING PHASE
+                    INFO     Planning for query: 'search for logs with MAWED07T01'
+[12/02/25 18:56:23] INFO     Generation successful: 198 chars, took 1.66s
+                    INFO     Created plan with 2 steps
+                    INFO       Step 1: search_logs {'value': 'MAWED07T01'}
+                    INFO       Step 2: extract_entities {'entity_types': ['cm', 'md_id']}
+                    INFO
+                             ⚙️  EXECUTION PHASE                                                                        
+                    INFO     Executing plan with 2 steps
+                    INFO
+                             ──────────────────────────────────────────────────
+                    INFO     Step 1/2: search_logs
+                    INFO     Parameters: {'value': 'MAWED07T01'}
+                    INFO     ✓ Success: Found 3 logs containing 'MAWED07T01'
+                    INFO     📦 Cached 3 logs
+                    INFO
+                             ──────────────────────────────────────────────────
+                    INFO     Step 2/2: extract_entities
+                    INFO     Parameters: {'entity_types': ['cm', 'md_id']}
+                    INFO     ✓ Auto-injected 3 cached logs
+                    INFO     Extracting 2 entity types from 3 log entries
                     INFO     Search columns: ['_source.log']
-                    INFO     Search columns: ['_source.log']                                       entity_manager.py:286
-                    INFO     Processing entity type: cm_mac
-                    INFO     Processing entity type: cm_mac                                        entity_manager.py:289
-                    INFO     Extracted 2 unique entities
-                    INFO     Extracted 2 unique entities                                           entity_manager.py:341
-                    INFO     ✓ Tool succeeded: Extracted 2 entities: cm_mac: [1c:93:7c:2a:72:c3, 28:7a:ee:c9:66:4a]
-                    INFO     ✓ Tool succeeded: Extracted 2 entities: cm_mac:                   smart_orchestrator.py:174
-                             [1c:93:7c:2a:72:c3, 28:7a:ee:c9:66:4a]
+                    INFO     Processing entity type: cm
+                    INFO     Processing entity type: md_id
+                    INFO     Extracted 1 unique entities
+                    INFO     ✓ Success: Extracted 1 entities: md_id: [0x6a030000]
                     INFO
-                             ──────────────────────────────────────────────────────────────────────
-                    INFO                                                                        smart_orchestrator.py:81
-                             ──────────────────────────────────────────────────────────────────
-                             ────
-                    INFO     📍 ITERATION 3
-                    INFO     📍 ITERATION 3                                                     smart_orchestrator.py:82
-                    INFO     ──────────────────────────────────────────────────────────────────────
-                    INFO     ────────────────────────────────────────────────────────────────── smart_orchestrator.py:83
-                             ────
-                    INFO     🤔 LLM is reasoning...
-                    INFO     🤔 LLM is reasoning...                                             smart_orchestrator.py:92
-[12/02/25 16:50:30] INFO     Generation successful: 254 chars, took 1.85s
-[12/02/25 16:50:30] INFO     Generation successful: 254 chars, took 1.85s                           ollama_client.py:178
-                    INFO     💡 Reasoning: We've extracted CM MAC addresses from logs containing MAWED07T01, now we can
-                             count how many times each of these CMs appear in the logs to confirm thei...
-                    INFO     💡 Reasoning: We've extracted CM MAC addresses from logs          smart_orchestrator.py:109
-                             containing MAWED07T01, now we can count how many times each of
-                             these CMs appear in the logs to confirm thei...
-                    INFO     🔧 Calling tool: count_entities
-                    INFO     🔧 Calling tool: count_entities                                   smart_orchestrator.py:135
-                    INFO     📋 Parameters: {'entity_type': 'cm_mac'}
-                    INFO     📋 Parameters: {'entity_type': 'cm_mac'}                          smart_orchestrator.py:136
-                    INFO     ✓ Auto-injected cached logs (3 rows) into count_entities
-                    INFO     ✓ Auto-injected cached logs (3 rows) into count_entities          smart_orchestrator.py:146
-                    INFO     Extracting 1 entity types from 3 log entries
-                    INFO     Extracting 1 entity types from 3 log entries                          entity_manager.py:285
+                             ======================================================================
+                    INFO     ✅ ANALYSIS COMPLETE
+                    INFO     Success: False
+                    INFO     Steps: 2/2
+                    INFO     Duration: 3.71s
+                    INFO     ======================================================================
+
+Result:
+  Success: False
+  Steps: 2/2
+  Duration: 3.71s
+  Confidence: 0.00
+
+Answer:
+╭──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╮
+│ Plan executed but no answer provided                                                                                 │
+╰──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
+✗ Missing keywords: 3, logs, MAWED07T01
+
+======================================================================
+Query: find all cms connected to rpd MAWED07T01
+======================================================================
+                    INFO     ======================================================================
+                    INFO     SPLIT ORCHESTRATOR - Query: find all cms connected to rpd MAWED07T01
+                    INFO     ======================================================================
+                    INFO
+                             📋 PLANNING PHASE
+                    INFO     Planning for query: 'find all cms connected to rpd MAWED07T01'
+[12/02/25 18:56:28] INFO     Generation successful: 406 chars, took 2.77s
+                    INFO     Created plan with 4 steps
+                    INFO       Step 1: search_logs {}
+                    INFO       Step 2: extract_entities {'entity_types': ['cm']}
+                    INFO       Step 3: find_entity_relationships {'target_value': 'MAWED07T01', 'related_types':
+                             ['rpdname']}
+                    INFO       Step 4: finalize_answer {}
+                    INFO
+                             ⚙️  EXECUTION PHASE                                                                        
+                    INFO     Executing plan with 4 steps
+                    INFO
+                             ──────────────────────────────────────────────────
+                    INFO     Step 1/4: search_logs
+                    INFO     Parameters: {}
+                    INFO     ✓ Success: Found 2115 logs
+                    INFO     📦 Cached 2115 logs
+                    INFO
+                             ──────────────────────────────────────────────────
+                    INFO     Step 2/4: extract_entities
+                    INFO     Parameters: {'entity_types': ['cm']}
+                    INFO     ✓ Auto-injected 2115 cached logs
+                    INFO     Extracting 1 entity types from 2115 log entries
                     INFO     Search columns: ['_source.log']
-                    INFO     Search columns: ['_source.log']                                       entity_manager.py:286
-                    INFO     Processing entity type: cm_mac
-                    INFO     Processing entity type: cm_mac                                        entity_manager.py:289
-                    INFO     Extracted 2 unique entities
-                    INFO     Extracted 2 unique entities                                           entity_manager.py:341
-                    ERROR    Tool execution exception: 'Entity' object has no attribute 'log_indices'
-                             Traceback (most recent call last):
-                               File "C:\Users\AYUSH\work\ai-stuff\test-AI-log-engine\src\core\smart_orchestrator.py",
-                             line 171, in execute
-                                 result = tool.execute(**parameters)
-                               File "C:\Users\AYUSH\work\ai-stuff\test-AI-log-engine\src\core\tools\entity_tools.py",
-                             line 170, in execute
-                                 counts = len(entity_obj.log_indices)
-                             AttributeError: 'Entity' object has no attribute 'log_indices'
-                    ERROR    Tool execution exception: 'Entity' object has no attribute        smart_orchestrator.py:198
-                             'log_indices'
-                             ╭────────────── Traceback (most recent call last) ──────────────╮
-                             │ C:\Users\AYUSH\work\ai-stuff\test-AI-log-engine\src\core\smar │
-                             │ t_orchestrator.py:171 in execute                              │
-                             │                                                               │
-                             │   168 │   │   │                                               │
-                             │   169 │   │   │   # Execute tool                              │
-                             │   170 │   │   │   try:                                        │
-                             │ ❱ 171 │   │   │   │   result = tool.execute(**parameters)     │
-                             │   172 │   │   │   │                                           │
-                             │   173 │   │   │   │   if result.success:                      │
-                             │   174 │   │   │   │   │   logger.info(f"✓ Tool succeeded: {re │
-                             │                                                               │
-                             │ C:\Users\AYUSH\work\ai-stuff\test-AI-log-engine\src\core\tool │
-                             │ s\entity_tools.py:170 in execute                              │
-                             │                                                               │
-                             │   167 │   │   counts = {}                                     │
-                             │   168 │   │   for (etype, evalue), entity_obj in entity_objec │
-                             │   169 │   │   │   if etype == entity_type:                    │
-                             │ ❱ 170 │   │   │   │   counts[evalue] = len(entity_obj.log_ind │
-                             │   171 │   │                                                   │
-                             │   172 │   │   if not counts:                                  │
-                             │   173 │   │   │   return ToolResult(                          │
-                             ╰───────────────────────────────────────────────────────────────╯
-                             AttributeError: 'Entity' object has no attribute 'log_indices'
+                    INFO     Processing entity type: cm
+                    INFO     Extracted 0 unique entities
+                    INFO     ✓ Success: No entities of types ['cm'] found
                     INFO
-                             ──────────────────────────────────────────────────────────────────────
-                    INFO                                                                        smart_orchestrator.py:81
-                             ──────────────────────────────────────────────────────────────────
-                             ────
-                    INFO     📍 ITERATION 4
-                    INFO     📍 ITERATION 4                                                     smart_orchestrator.py:82
-                    INFO     ──────────────────────────────────────────────────────────────────────
-                    INFO     ────────────────────────────────────────────────────────────────── smart_orchestrator.py:83
-                             ────
-                    INFO     🤔 LLM is reasoning...
-                    INFO     🤔 LLM is reasoning...                                             smart_orchestrator.py:92
-[12/02/25 16:50:35] INFO     Generation successful: 341 chars, took 2.77s
-[12/02/25 16:50:35] INFO     Generation successful: 341 chars, took 2.77s                           ollama_client.py:178
-                    INFO     💡 Reasoning: Error in count_entities suggests we should try a different approach to
-                             confirm CM connection, so let's find what other entities appear with the target...
-                    INFO     💡 Reasoning: Error in count_entities suggests we should try a    smart_orchestrator.py:109
-                             different approach to confirm CM connection, so let's find what
-                             other entities appear with the target...
-                    INFO     🔧 Calling tool: find_entity_relationships
-                    INFO     🔧 Calling tool: find_entity_relationships                        smart_orchestrator.py:135
-                    INFO     📋 Parameters: {'target_value': '[1c:93:7c:2a:72:c3, 28:7a:ee:c9:66:4a]', 'related_types':
-                             ['cm_mac', 'md_id']}
-                    INFO     📋 Parameters: {'target_value': '[1c:93:7c:2a:72:c3,              smart_orchestrator.py:136
-                             28:7a:ee:c9:66:4a]', 'related_types': ['cm_mac', 'md_id']}
-                    INFO     ✓ Auto-injected cached logs (3 rows) into find_entity_relationships
-                    INFO     ✓ Auto-injected cached logs (3 rows) into                         smart_orchestrator.py:146
-                             find_entity_relationships
-                    ERROR    Tool execution exception: Only CSV files are supported:
-                             Traceback (most recent call last):
-                               File "C:\Users\AYUSH\work\ai-stuff\test-AI-log-engine\src\core\smart_orchestrator.py",
-                             line 171, in execute
-                                 result = tool.execute(**parameters)
-                               File "C:\Users\AYUSH\work\ai-stuff\test-AI-log-engine\src\core\tools\entity_tools.py",
-                             line 336, in execute
-                                 processor = LogProcessor("")
-                               File "C:\Users\AYUSH\work\ai-stuff\test-AI-log-engine\src\core\log_processor.py", line
-                             43, in __init__
-                                 raise LogFileError(f"Only CSV files are supported: {log_file_path}")
-                             src.utils.exceptions.LogFileError: Only CSV files are supported:
-                    ERROR    Tool execution exception: Only CSV files are supported:           smart_orchestrator.py:198
-                             ╭────────────── Traceback (most recent call last) ──────────────╮
-                             │ C:\Users\AYUSH\work\ai-stuff\test-AI-log-engine\src\core\smar │
-                             │ t_orchestrator.py:171 in execute                              │
-                             │                                                               │
-                             │   168 │   │   │                                               │
-                             │   169 │   │   │   # Execute tool                              │
-                             │   170 │   │   │   try:                                        │
-                             │ ❱ 171 │   │   │   │   result = tool.execute(**parameters)     │
-                             │   172 │   │   │   │                                           │
-                             │   173 │   │   │   │   if result.success:                      │
-                             │   174 │   │   │   │   │   logger.info(f"✓ Tool succeeded: {re │
-                             │                                                               │
-                             │ C:\Users\AYUSH\work\ai-stuff\test-AI-log-engine\src\core\tool │
-                             │ s\entity_tools.py:336 in execute                              │
-                             │                                                               │
-                             │   333 │   │                                                   │
-                             │   334 │   │   # Filter logs containing target value           │
-                             │   335 │   │   from ..log_processor import LogProcessor        │
-                             │ ❱ 336 │   │   processor = LogProcessor("")                    │
-                             │   337 │   │   target_logs = processor.search_text(logs, targe │
-                             │   338 │   │                                                   │
-                             │   339 │   │   if target_logs.empty:                           │
-                             │                                                               │
-                             │ C:\Users\AYUSH\work\ai-stuff\test-AI-log-engine\src\core\log_ │
-                             │ processor.py:43 in __init__                                   │
-                             │                                                               │
-                             │    40 │   │   │   raise LogFileError(f"Log file not found: {l │
-                             │    41 │   │                                                   │
-                             │    42 │   │   if not self.log_file_path.suffix.lower() == '.c │
-                             │ ❱  43 │   │   │   raise LogFileError(f"Only CSV files are sup │
-                             │    44 │   │                                                   │
-                             │    45 │   │   # Load schema configuration                     │
-                             │    46 │   │   self.columns = config.get_log_columns(schema_na │
-                             ╰───────────────────────────────────────────────────────────────╯
-                             LogFileError: Only CSV files are supported:
+                             ──────────────────────────────────────────────────
+                    INFO     Step 3/4: find_entity_relationships
+                    INFO     Parameters: {'target_value': 'MAWED07T01', 'related_types': ['rpdname']}
+                    INFO     ✓ Auto-injected 2115 cached logs
+                    INFO     Extracting 1 entity types from 3 log entries
+                    INFO     Search columns: ['_source.log']
+                    INFO     Processing entity type: rpdname
+                    INFO     Extracted 1 unique entities
+                    INFO     ✓ Success: Found 1 related entities for 'MAWED07T01': rpdname: [MAWED07T01]
                     INFO
-                             ──────────────────────────────────────────────────────────────────────
-                    INFO                                                                        smart_orchestrator.py:81
-                             ──────────────────────────────────────────────────────────────────
-                             ────
-                    INFO     📍 ITERATION 5
-                    INFO     📍 ITERATION 5                                                     smart_orchestrator.py:82
-                    INFO     ──────────────────────────────────────────────────────────────────────
-                    INFO     ────────────────────────────────────────────────────────────────── smart_orchestrator.py:83
-                             ────
-                    INFO     🤔 LLM is reasoning...
-                    INFO     🤔 LLM is reasoning...                                             smart_orchestrator.py:92
-[12/02/25 16:50:40] INFO     Generation successful: 342 chars, took 2.90s
-[12/02/25 16:50:40] INFO     Generation successful: 342 chars, took 2.90s                           ollama_client.py:178
-                    INFO     💡 Reasoning: Error in count_entities suggests we should try a different approach to
-                             confirm CM connection, so let's find what other entities appear with the target...
-                    INFO     💡 Reasoning: Error in count_entities suggests we should try a    smart_orchestrator.py:109
-                             different approach to confirm CM connection, so let's find what
-                             other entities appear with the target...
-                    INFO     🔧 Calling tool: find_entity_relationships
-                    INFO     🔧 Calling tool: find_entity_relationships                        smart_orchestrator.py:135
-                    INFO     📋 Parameters: {'target_value': '[1c:93:7c:2a:72:c3, 28:7a:ee:c9:66:4a]', 'related_types':
-                             ['rpdname', 'md_id']}
-                    INFO     📋 Parameters: {'target_value': '[1c:93:7c:2a:72:c3,              smart_orchestrator.py:136
-                             28:7a:ee:c9:66:4a]', 'related_types': ['rpdname', 'md_id']}
-                    INFO     ✓ Auto-injected cached logs (3 rows) into find_entity_relationships
-                    INFO     ✓ Auto-injected cached logs (3 rows) into                         smart_orchestrator.py:146
-                             find_entity_relationships
-                    ERROR    Tool execution exception: Only CSV files are supported:
-                             Traceback (most recent call last):
-                               File "C:\Users\AYUSH\work\ai-stuff\test-AI-log-engine\src\core\smart_orchestrator.py",
-                             line 171, in execute
-                                 result = tool.execute(**parameters)
-                               File "C:\Users\AYUSH\work\ai-stuff\test-AI-log-engine\src\core\tools\entity_tools.py",
-                             line 336, in execute
-                                 processor = LogProcessor("")
-                               File "C:\Users\AYUSH\work\ai-stuff\test-AI-log-engine\src\core\log_processor.py", line
-                             43, in __init__
-                                 raise LogFileError(f"Only CSV files are supported: {log_file_path}")
-                             src.utils.exceptions.LogFileError: Only CSV files are supported:
-                    ERROR    Tool execution exception: Only CSV files are supported:           smart_orchestrator.py:198
-                             ╭────────────── Traceback (most recent call last) ──────────────╮
-                             │ C:\Users\AYUSH\work\ai-stuff\test-AI-log-engine\src\core\smar │
-                             │ t_orchestrator.py:171 in execute                              │
-                             │                                                               │
-                             │   168 │   │   │                                               │
-                             │   169 │   │   │   # Execute tool                              │
-                             │   170 │   │   │   try:                                        │
-                             │ ❱ 171 │   │   │   │   result = tool.execute(**parameters)     │
-                             │   172 │   │   │   │                                           │
-                             │   173 │   │   │   │   if result.success:                      │
-                             │   174 │   │   │   │   │   logger.info(f"✓ Tool succeeded: {re │
-                             │                                                               │
-                             │ C:\Users\AYUSH\work\ai-stuff\test-AI-log-engine\src\core\tool │
-                             │ s\entity_tools.py:336 in execute                              │
-                             │                                                               │
-                             │   333 │   │                                                   │
-                             │   334 │   │   # Filter logs containing target value           │
-                             │   335 │   │   from ..log_processor import LogProcessor        │
-                             │ ❱ 336 │   │   processor = LogProcessor("")                    │
-                             │   337 │   │   target_logs = processor.search_text(logs, targe │
-                             │   338 │   │                                                   │
-                             │   339 │   │   if target_logs.empty:                           │
-                             │                                                               │
-                             │ C:\Users\AYUSH\work\ai-stuff\test-AI-log-engine\src\core\log_ │
-                             │ processor.py:43 in __init__                                   │
-                             │                                                               │
-                             │    40 │   │   │   raise LogFileError(f"Log file not found: {l │
-                             │    41 │   │                                                   │
-                             │    42 │   │   if not self.log_file_path.suffix.lower() == '.c │
-                             │ ❱  43 │   │   │   raise LogFileError(f"Only CSV files are sup │
-                             │    44 │   │                                                   │
-                             │    45 │   │   # Load schema configuration                     │
-                             │    46 │   │   self.columns = config.get_log_columns(schema_na │
-                             ╰───────────────────────────────────────────────────────────────╯
-                             LogFileError: Only CSV files are supported:
+                             ──────────────────────────────────────────────────
+                    INFO     Step 4/4: finalize_answer
+                    INFO     Parameters: {}
+                    INFO     ✓ Finalized: No answer provided...
                     INFO
-                             ──────────────────────────────────────────────────────────────────────
-                    INFO                                                                        smart_orchestrator.py:81
-                             ──────────────────────────────────────────────────────────────────
-                             ────
-                    INFO     📍 ITERATION 6
-                    INFO     📍 ITERATION 6                                                     smart_orchestrator.py:82
-                    INFO     ──────────────────────────────────────────────────────────────────────
-                    INFO     ────────────────────────────────────────────────────────────────── smart_orchestrator.py:83
-                             ────
-                    INFO     🤔 LLM is reasoning...
+                             ======================================================================
+                    INFO     ✅ ANALYSIS COMPLETE
+                    INFO     Success: True
+                    INFO     Steps: 4/4
+                    INFO     Duration: 4.97s
+                    INFO     ======================================================================
+
+Result:
+  Success: True
+  Steps: 4/4
+  Duration: 4.97s
+  Confidence: 0.80
+
+Answer:
+╭──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╮
+│ No answer provided                                                                                                   │
+╰──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
+✗ Missing keywords: cm, MAWED07T01
+
+======================================================================
+SUMMARY
+======================================================================
+┏━━━━━━━━━━━━━━┳━━━━━━━┓
+┃ Metric       ┃ Value ┃
+┡━━━━━━━━━━━━━━╇━━━━━━━┩
+│ Tests Passed │   1/3 │
+│ Success Rate │   33% │
+└──────────────┴───────┘
+
+⚠ PARTIAL SUCCESS
+1/3 tests passed - review failures
+PS C:\Users\AYUSH\work\ai-stuff\test-AI-log-engine>

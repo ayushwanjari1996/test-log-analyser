@@ -89,8 +89,8 @@ class FuzzySearchTool(Tool):
                 ToolParameter(
                     name="logs",
                     param_type=ParameterType.DATAFRAME,
-                    description="DataFrame of logs to search",
-                    required=True
+                    description="DataFrame of logs to search (auto-injected)",
+                    required=False
                 ),
                 ToolParameter(
                     name="term",

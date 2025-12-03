@@ -25,6 +25,9 @@ from .smart_search_tools import (
 from .meta_tools import (
     FinalizeAnswerTool
 )
+from .output_tools import (
+    ReturnLogsTool
+)
 
 __all__ = [
     # Base classes
@@ -37,6 +40,8 @@ __all__ = [
     'FindEntityRelationshipsTool',
     # Smart search
     'NormalizeTermTool', 'FuzzySearchTool',
+    # Output tools
+    'ReturnLogsTool',
     # Meta tools
     'FinalizeAnswerTool'
 ]
@@ -80,6 +85,9 @@ def create_all_tools(log_file_path: str, config_dir: str = "config"):
     normalize_tool = NormalizeTermTool(config_dir)
     tools.append(normalize_tool)
     tools.append(FuzzySearchTool(normalize_tool, config_dir))
+    
+    # Output tools
+    tools.append(ReturnLogsTool())
     
     # Meta tools
     tools.append(FinalizeAnswerTool())

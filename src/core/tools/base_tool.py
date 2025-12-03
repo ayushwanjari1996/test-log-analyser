@@ -134,7 +134,11 @@ class Tool(ABC):
                 elif param.param_type == ParameterType.BOOLEAN and not isinstance(value, bool):
                     return False, f"Parameter '{param.name}' must be boolean, got {type(value).__name__}"
                 elif param.param_type == ParameterType.LIST and not isinstance(value, list):
-                    return False, f"Parameter '{param.name}' must be list, got {type(value).__name__}"
+                    # Allow empty string for optional list parameters (convert to empty list or None)
+                    if isinstance(value, str) and value.strip() == "" and not param.required:
+                        kwargs[param.name] = None
+                    else:
+                        return False, f"Parameter '{param.name}' must be list, got {type(value).__name__}"
                 elif param.param_type == ParameterType.DICT and not isinstance(value, dict):
                     return False, f"Parameter '{param.name}' must be dict, got {type(value).__name__}"
         
@@ -147,14 +151,28 @@ class Tool(ABC):
         Returns human-readable description with parameter details.
         """
         desc = f"**{self.name}**\n"
-        desc += f"Description: {self.description}\n"
-        desc += "Parameters:\n"
+        desc += f"{self.description}\n"
         
-        for param in self.parameters:
-            required_str = "required" if param.required else "optional"
-            desc += f"  - {param.name} ({param.param_type.value}, {required_str}): {param.description}\n"
-            if param.example:
-                desc += f"    Example: {param.example}\n"
+        if self.parameters:
+            desc += "Parameters:\n"
+            for param in self.parameters:
+                # Type string with emphasis
+                type_str = param.param_type.value.upper()
+                required_str = "[REQUIRED]" if param.required else "[OPTIONAL]"
+                
+                # Build parameter line
+                desc += f"  • {param.name} {required_str} - Type: {type_str}\n"
+                desc += f"    {param.description}\n"
+                
+                if param.example is not None:
+                    # Format example based on type
+                    if param.param_type == ParameterType.STRING:
+                        example_str = f'"{param.example}"'
+                    elif param.param_type == ParameterType.LIST:
+                        example_str = str(param.example) if isinstance(param.example, list) else f'["{param.example}"]'
+                    else:
+                        example_str = str(param.example)
+                    desc += f"    Usage: {{\"{param.name}\": {example_str}}}\n"
         
         return desc
     
