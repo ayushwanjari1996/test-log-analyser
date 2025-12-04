@@ -107,7 +107,13 @@ class ContextBuilder:
         Returns:
             Dictionary with current state information
         """
-        # Use the state's built-in log summary
+        # Use smart summary if available (for large datasets)
+        if state.current_summary:
+            return {
+                "logs": state.current_summary
+            }
+        
+        # Otherwise use the state's built-in log summary (for small datasets)
         log_summary = state.get_log_summary(max_samples=3)
         
         return {

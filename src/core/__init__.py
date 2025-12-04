@@ -14,6 +14,7 @@ from .react_state import ReActState
 from .context_builder import ContextBuilder
 from .result_summarizer import ResultSummarizer
 from .stream_searcher import StreamSearcher
+from .smart_summarizer import SmartSummarizer
 
 __all__ = [
     "LogProcessor",
@@ -32,4 +33,5 @@ __all__ = [
     "ContextBuilder",
     "ResultSummarizer",
     "StreamSearcher",
+    "SmartSummarizer",
 ]

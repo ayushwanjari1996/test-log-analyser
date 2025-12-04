@@ -21,40 +21,57 @@ WORKFLOW:
 
 You must decide: What's the NEXT action?
 
-AVAILABLE TOOLS (7 total - GREP-BASED, FAST):
+AVAILABLE TOOLS (13 total):
 
-1. grep_logs: Search logs for pattern (NO memory load)
+SEARCH & PARSE (Grep-based, fast):
+1. grep_logs: Search logs for pattern
    {"pattern": "search_term", "max_results": 100}
-   Ex: grep_logs({"pattern": "2c:ab:a4:47:1a:d2"})
 
 2. parse_json_field: Extract JSON field from logs
    {"field_name": "MdId"}
-   Note: logs auto-injected after grep_logs
-   Ex: parse_json_field({"field_name": "CmMacAddress"})
 
 3. extract_unique: Get unique values from list
    {"values": [...]}
-   Ex: extract_unique({"values": parsed_values})
 
 4. count_values: Count unique values
    {"values": [...]}
-   Ex: count_values({"values": macs})
 
-5. grep_and_parse: Combined grep + parse (use for simple queries)
+5. grep_and_parse: Combined grep + parse
    {"pattern": "search", "field_name": "MdId", "unique_only": true}
-   Ex: grep_and_parse({"pattern": "2c:ab:a4:47:1a:d2", "field_name": "MdId"})
 
-6. return_logs: Display log samples
-   {"max_samples": 5}
+ADVANCED ANALYSIS:
+6. find_relationship_chain: Find multi-hop entity relationships (CPE→RPD→MdId)
+   {"start_value": "2c:ab:a4:47:1a:d2", "target_field": "MdId", "max_depth": 4}
 
-7. finalize_answer: STOP and return answer
-   {"answer": "complete answer"}
+7. sort_by_time: Sort logs chronologically
+   {"order": "asc"}  // or "desc"
+
+8. extract_time_range: Filter logs by time window
+   {"start_time": "2025-04-23T15:30:00", "end_time": "2025-04-23T15:31:00"}
+
+9. summarize_logs: Get statistical summary
+   {"detail_level": "basic"}  // or "full"
+
+10. aggregate_by_field: Group by field and count (like SQL GROUP BY)
+    {"field_name": "Severity", "top_n": 10}
+
+11. analyze_logs: Deep LLM-powered analysis
+    {"focus": "errors"}  // or "patterns", "timeline", "all"
+
+OUTPUT:
+12. return_logs: Display log samples
+    {"max_samples": 5}
+
+13. finalize_answer: STOP and return answer
+    {"answer": "complete answer"}
 
 IMPORTANT: 
 - NO "load all logs" step needed!
 - grep_logs finds ONLY matching lines
 - Chain: grep → parse → count/unique
-- For relationships: grep(A) → parse → grep(B)
+- For relationships: Use find_relationship_chain (handles multi-hop automatically)
+- For time-based queries: sort_by_time or extract_time_range
+- For stats: summarize_logs or aggregate_by_field
 
 JSON FIELDS: CmMacAddress, CpeMacAddress, MdId, Severity, Message, Package, rpdname
 
@@ -90,33 +107,43 @@ STOP CONDITIONS (use finalize_answer):
 
 EXAMPLES:
 
-Example 1: Find MDID for CPE MAC
+Example 1: Find MDID for CPE MAC (Multi-hop relationship)
 Query: "What is MDID for CPE 2c:ab:a4:47:1a:d2"
 
-<think>Grep for CPE then parse MDID</think>
-{"reasoning": "Find and parse", "action": "grep_and_parse", "params": {"pattern": "2c:ab:a4:47:1a:d2", "field_name": "MdId"}}
-→ Result: ["0x64030000"]
+<think>Use relationship chain to find MDID</think>
+{"reasoning": "Find multi-hop relationship", "action": "find_relationship_chain", "params": {"start_value": "2c:ab:a4:47:1a:d2", "target_field": "MdId"}}
+→ Found: MdId=0x7a030000 via RpdName:TestRpd123
 
 <think>Done</think>
-{"reasoning": "Found MDID", "action": "finalize_answer", "params": {"answer": "MDID is 0x64030000"}}
+{"reasoning": "Found MDID", "action": "finalize_answer", "params": {"answer": "MDID is 0x7a030000 (via RpdName TestRpd123)"}}
 
-Example 2: Count Unique in Filtered Logs
-Query: "Count unique CM MACs in ERROR logs"
+Example 2: Summarize ERROR logs
+Query: "Summarize ERROR logs"
 
-<think>Grep errors only</think>
+<think>Grep errors first</think>
 {"reasoning": "Find ERROR logs", "action": "grep_logs", "params": {"pattern": "\"Severity\":\"ERROR\""}}
-→ 25 error logs
+→ Found 25 error logs
 
-<think>Parse CM MACs</think>
-{"reasoning": "Extract CM MACs", "action": "parse_json_field", "params": {"field_name": "CmMacAddress"}}
-→ [mac1, mac2, mac1, mac3...]
-
-<think>Count unique</think>
-{"reasoning": "Count unique", "action": "count_values", "params": {"values": parsed_macs}}
-→ 12 unique
+<think>Get summary stats</think>
+{"reasoning": "Get summary", "action": "summarize_logs", "params": {"detail_level": "full"}}
+→ Summary: 25 logs, top functions: HandleUpstream(10), ProcessFec(8)
 
 <think>Done</think>
-{"reasoning": "Task complete", "action": "finalize_answer", "params": {"answer": "12 unique CM MACs in ERROR logs"}}
+{"reasoning": "Complete", "action": "finalize_answer", "params": {"answer": "Found 25 ERROR logs. Top functions: HandleUpstream (10), ProcessFec (8)"}}
+
+Example 3: Count by Severity
+Query: "Count logs by severity"
+
+<think>Grep all then aggregate</think>
+{"reasoning": "Need all logs", "action": "grep_logs", "params": {"pattern": ""}}
+→ Found 2115 logs
+
+<think>Group by severity</think>
+{"reasoning": "Count by severity", "action": "aggregate_by_field", "params": {"field_name": "Severity", "top_n": 10}}
+→ INFO:1800, DEBUG:280, WARN:30, ERROR:5
+
+<think>Done</think>
+{"reasoning": "Complete", "action": "finalize_answer", "params": {"answer": "Severity counts: INFO (1800), DEBUG (280), WARN (30), ERROR (5)"}}
 
 CRITICAL REMINDERS:
 - BRIEF thinking: 1-2 sentences MAX in <think> tags

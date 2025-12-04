@@ -94,6 +94,7 @@ class ReActState:
         self.loaded_logs: Optional[pd.DataFrame] = None
         self.filtered_logs: Optional[pd.DataFrame] = None
         self.current_logs: Optional[pd.DataFrame] = None  # Current working dataset
+        self.current_summary: Optional[str] = None  # Smart summary of current logs
         self.extracted_entities: Dict[str, List[Any]] = {}
         
         # Results
@@ -305,16 +306,19 @@ class ReActState:
             "time_range": time_range
         }
     
-    def update_current_logs(self, logs: Optional[pd.DataFrame]) -> None:
+    def update_current_logs(self, logs: Optional[pd.DataFrame], summary: Optional[str] = None) -> None:
         """
         Update the current working dataset.
         
         Args:
             logs: New logs DataFrame
+            summary: Optional smart summary of logs (for large datasets)
         """
         self.current_logs = logs
+        self.current_summary = summary
         if logs is not None:
-            logger.debug(f"Updated current_logs: {len(logs)} logs")
+            logger.debug(f"Updated current_logs: {len(logs)} logs" + 
+                        (f" with smart summary ({len(summary)} chars)" if summary else ""))
     
     def update_entities(self, entities: Dict[str, List[Any]]) -> None:
         """

@@ -16,6 +16,7 @@ import pandas as pd
 from .react_state import ReActState
 from .context_builder import ContextBuilder
 from .result_summarizer import ResultSummarizer
+from .smart_summarizer import SmartSummarizer
 from .tool_registry import ToolRegistry
 from .tools import create_all_tools
 from .tools.base_tool import ToolResult
@@ -83,11 +84,12 @@ class IterativeReactOrchestrator:
             self.registry.register(tool)
         logger.info(f"Registered {len(tools)} tools")
         
-        # Initialize context builder and summarizer
+        # Initialize context builder and summarizers
         self.context_builder = ContextBuilder(self.registry, max_history=5)
         self.summarizer = ResultSummarizer(max_text_length=100)
+        self.smart_summarizer = SmartSummarizer(config_dir=config_dir, max_samples=10)
         
-        logger.info("IterativeReactOrchestrator ready")
+        logger.info("IterativeReactOrchestrator ready with SmartSummarizer")
     
     def process(self, query: str) -> Dict[str, Any]:
         """
@@ -484,10 +486,20 @@ class IterativeReactOrchestrator:
         
         # Update current logs if tool returned logs
         if result.success and result.data is not None:
-            if isinstance(result.data, pd.DataFrame):
+            if isinstance(result.data, pd.DataFrame) and not result.data.empty:
                 if self.verbose:
                     logger.debug(f"  Updating current_logs: {len(result.data)} rows")
-                state.update_current_logs(result.data)
+                
+                # Use SmartSummarizer for large datasets
+                if len(result.data) > 50:
+                    summary_result = self.smart_summarizer.summarize(result.data)
+                    state.update_current_logs(result.data, summary=summary_result['summary_text'])
+                    
+                    if self.verbose:
+                        logger.debug(f"  Smart summary generated: {len(summary_result['summary_text'])} chars")
+                else:
+                    # Small datasets: store as-is
+                    state.update_current_logs(result.data)
             
             # Update entities if extracted
             elif isinstance(result.data, dict) and all(isinstance(v, list) for v in result.data.values()):

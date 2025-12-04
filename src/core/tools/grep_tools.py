@@ -154,7 +154,13 @@ class ParseJsonFieldTool(Tool):
             if '_source.log' in logs.columns:
                 for log_entry in logs['_source.log']:
                     try:
-                        log_json = json.loads(log_entry)
+                        # Extract JSON part (after prefix like "stdout F ")
+                        json_start = log_entry.find('{')
+                        if json_start == -1:
+                            continue
+                        json_str = log_entry[json_start:].replace('""', '"')
+                        
+                        log_json = json.loads(json_str)
                         if field_name in log_json:
                             value = log_json[field_name]
                             if value:  # Skip empty values
@@ -361,7 +367,13 @@ class GrepAndParseTool(Tool):
             if '_source.log' in results.columns:
                 for log_entry in results['_source.log']:
                     try:
-                        log_json = json.loads(log_entry)
+                        # Extract JSON part (after prefix)
+                        json_start = log_entry.find('{')
+                        if json_start == -1:
+                            continue
+                        json_str = log_entry[json_start:].replace('""', '"')
+                        
+                        log_json = json.loads(json_str)
                         if field_name in log_json:
                             value = log_json[field_name]
                             if value:
