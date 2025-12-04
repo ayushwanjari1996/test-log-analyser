@@ -93,6 +93,7 @@ class ReActState:
         # Cached data
         self.loaded_logs: Optional[pd.DataFrame] = None
         self.filtered_logs: Optional[pd.DataFrame] = None
+        self.current_logs: Optional[pd.DataFrame] = None  # Current working dataset
         self.extracted_entities: Dict[str, List[Any]] = {}
         
         # Results
@@ -256,6 +257,82 @@ class ReActState:
         
         duration = (self.end_time - self.start_time).total_seconds()
         logger.info(f"ReAct loop completed in {duration:.2f}s after {self.current_iteration} iterations")
+    
+    def get_log_summary(self, max_samples: int = 3) -> Dict[str, Any]:
+        """
+        Generate compact log summary for LLM context.
+        
+        Args:
+            max_samples: Number of sample logs to include
+            
+        Returns:
+            Dictionary with log statistics and samples
+        """
+        if self.current_logs is None or len(self.current_logs) == 0:
+            return {
+                "status": "No logs loaded",
+                "total_count": 0,
+                "sample_logs": []
+            }
+        
+        total = len(self.current_logs)
+        
+        # Get sample logs
+        sample = self.current_logs.head(max_samples)
+        sample_records = sample.to_dict('records')
+        
+        # Get severity distribution
+        severity_dist = {}
+        if 'severity' in self.current_logs.columns:
+            severity_dist = self.current_logs['severity'].value_counts().to_dict()
+        
+        # Get time range
+        time_range = {}
+        if 'timestamp' in self.current_logs.columns:
+            try:
+                time_range = {
+                    "earliest": str(self.current_logs['timestamp'].min()),
+                    "latest": str(self.current_logs['timestamp'].max())
+                }
+            except:
+                pass
+        
+        return {
+            "status": "Logs loaded",
+            "total_count": total,
+            "sample_logs": sample_records,
+            "severity_distribution": severity_dist,
+            "time_range": time_range
+        }
+    
+    def update_current_logs(self, logs: Optional[pd.DataFrame]) -> None:
+        """
+        Update the current working dataset.
+        
+        Args:
+            logs: New logs DataFrame
+        """
+        self.current_logs = logs
+        if logs is not None:
+            logger.debug(f"Updated current_logs: {len(logs)} logs")
+    
+    def update_entities(self, entities: Dict[str, List[Any]]) -> None:
+        """
+        Update extracted entities.
+        
+        Args:
+            entities: Dictionary of entity_type -> list of values
+        """
+        for entity_type, values in entities.items():
+            if entity_type in self.extracted_entities:
+                # Merge with existing
+                existing = set(self.extracted_entities[entity_type])
+                existing.update(values)
+                self.extracted_entities[entity_type] = list(existing)
+            else:
+                self.extracted_entities[entity_type] = values
+        
+        logger.debug(f"Updated entities: {list(self.extracted_entities.keys())}")
     
     def get_summary(self) -> Dict[str, Any]:
         """Get summary of execution"""

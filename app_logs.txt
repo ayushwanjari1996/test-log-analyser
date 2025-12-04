@@ -1,208 +1,141 @@
-PS C:\Users\AYUSH\work\ai-stuff\test-AI-log-engine> python test_split_orchestrator.py
-╭──────────────────────────────────╮
-│ Split Orchestrator Tests         │
-│ Planning Agent + Execution Agent │
-╰──────────────────────────────────╯
-✓ Found test.csv
+PS C:\Users\AYUSH\work\ai-stuff\test-AI-log-engine> python test_iterative_react.py
+[12/04/25 14:20:37] INFO     Initialized OllamaClient (base_url=http://localhost:11434, model=qwen3-react)
 
-Initializing...
-[12/02/25 18:56:11] INFO     Initialized OllamaClient (base_url=http://localhost:11434, model=llama3.1:latest)
-  ✓ LLM: llama3.1:latest
-                    INFO     Initialized LogProcessor for test.csv with schema 'default'
-                    INFO     Initialized EntityManager
-  ✓ Tools: 13 loaded
-  ✓ Registry: 13 registered
-                    INFO     PlanningAgent initialized
-                    INFO     ExecutionAgent initialized
-                    INFO     SplitOrchestrator initialized
-  ✓ Split Orchestrator ready
+============================================================
+Test 1: Find error logs for MAWED07T01 from last 24 hours
+============================================================
 
-======================================================================
-SIMPLE TESTS
-======================================================================
+--- Iteration 1 ---
+Sending: Find error logs for MAWED07T01 from last 24 hours
 
-======================================================================
-Query: count all logs
-======================================================================
-                    INFO     ======================================================================
-                    INFO     SPLIT ORCHESTRATOR - Query: count all logs
-                    INFO     ======================================================================
-                    INFO
-                             📋 PLANNING PHASE
-                    INFO     Planning for query: 'count all logs'
-[12/02/25 18:56:20] INFO     Generation successful: 93 chars, took 6.87s
-                    INFO     Created plan with 2 steps
-                    INFO       Step 1: search_logs {}
-                    INFO       Step 2: get_log_count {}
-                    INFO
-                             ⚙️  EXECUTION PHASE                                                                        
-                    INFO     Executing plan with 2 steps
-                    INFO
-                             ──────────────────────────────────────────────────
-                    INFO     Step 1/2: search_logs
-                    INFO     Parameters: {}
-                    INFO     Loaded 2115 log entries
-                    INFO     ✓ Success: Found 2115 logs
-                    INFO     📦 Cached 2115 logs
-                    INFO
-                             ──────────────────────────────────────────────────
-                    INFO     Step 2/2: get_log_count
-                    INFO     Parameters: {}
-                    INFO     ✓ Auto-injected 2115 cached logs
-                    INFO     ✓ Success: Log count: 2115
-                    INFO
-                             ======================================================================
-                    INFO     ✅ ANALYSIS COMPLETE
-                    INFO     Success: False
-                    INFO     Steps: 2/2
-                    INFO     Duration: 8.95s
-                    INFO     ======================================================================
+[12/04/25 14:21:01] INFO     Generation successful: 3468 chars, took 22.33s
+LLM Response (thinking + JSON):
+<think>
+Okay, the user wants error logs for MAWED07T01 from the last 24 hours. Let me break this down.
 
-Result:
-  Success: False
-  Steps: 2/2
-  Duration: 8.95s
-  Confidence: 0.00
+First, I need to start by searching for MAWED07T01 using the search_logs tool. That will load al...
 
-Answer:
-╭──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╮
-│ Plan executed but no answer provided                                                                                 │
-╰──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
-✗ Missing keywords: 2115, logs
+Extracted JSON: {"action": "search_logs", "params": {"value": "MAWED07T01"}, "reason": "Load logs for MAWED07T01"}
 
-======================================================================
-Query: search for logs with MAWED07T01
-======================================================================
-                    INFO     ======================================================================
-                    INFO     SPLIT ORCHESTRATOR - Query: search for logs with MAWED07T01
-                    INFO     ======================================================================
-                    INFO
-                             📋 PLANNING PHASE
-                    INFO     Planning for query: 'search for logs with MAWED07T01'
-[12/02/25 18:56:23] INFO     Generation successful: 198 chars, took 1.66s
-                    INFO     Created plan with 2 steps
-                    INFO       Step 1: search_logs {'value': 'MAWED07T01'}
-                    INFO       Step 2: extract_entities {'entity_types': ['cm', 'md_id']}
-                    INFO
-                             ⚙️  EXECUTION PHASE                                                                        
-                    INFO     Executing plan with 2 steps
-                    INFO
-                             ──────────────────────────────────────────────────
-                    INFO     Step 1/2: search_logs
-                    INFO     Parameters: {'value': 'MAWED07T01'}
-                    INFO     ✓ Success: Found 3 logs containing 'MAWED07T01'
-                    INFO     📦 Cached 3 logs
-                    INFO
-                             ──────────────────────────────────────────────────
-                    INFO     Step 2/2: extract_entities
-                    INFO     Parameters: {'entity_types': ['cm', 'md_id']}
-                    INFO     ✓ Auto-injected 3 cached logs
-                    INFO     Extracting 2 entity types from 3 log entries
-                    INFO     Search columns: ['_source.log']
-                    INFO     Processing entity type: cm
-                    INFO     Processing entity type: md_id
-                    INFO     Extracted 1 unique entities
-                    INFO     ✓ Success: Extracted 1 entities: md_id: [0x6a030000]
-                    INFO
-                             ======================================================================
-                    INFO     ✅ ANALYSIS COMPLETE
-                    INFO     Success: False
-                    INFO     Steps: 2/2
-                    INFO     Duration: 3.71s
-                    INFO     ======================================================================
+Simulated: Found 150 logs
 
-Result:
-  Success: False
-  Steps: 2/2
-  Duration: 3.71s
-  Confidence: 0.00
+--- Iteration 2 ---
+Sending: Query: Find error logs for MAWED07T01 from last 24 hours
 
-Answer:
-╭──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╮
-│ Plan executed but no answer provided                                                                                 │
-╰──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
-✗ Missing keywords: 3, logs, MAWED07T01
+Previous: ['search_logs → Found 150 logs']
 
-======================================================================
-Query: find all cms connected to rpd MAWED07T01
-======================================================================
-                    INFO     ======================================================================
-                    INFO     SPLIT ORCHESTRATOR - Query: find all cms connected to rpd MAWED07T01
-                    INFO     ======================================================================
-                    INFO
-                             📋 PLANNING PHASE
-                    INFO     Planning for query: 'find all cms connected to rpd MAWED07T01'
-[12/02/25 18:56:28] INFO     Generation successful: 406 chars, took 2.77s
-                    INFO     Created plan with 4 steps
-                    INFO       Step 1: search_logs {}
-                    INFO       Step 2: extract_entities {'entity_types': ['cm']}
-                    INFO       Step 3: find_entity_relationships {'target_value': 'MAWED07T01', 'related_types':
-                             ['rpdname']}
-                    INFO       Step 4: finalize_answer {}
-                    INFO
-                             ⚙️  EXECUTION PHASE                                                                        
-                    INFO     Executing plan with 4 steps
-                    INFO
-                             ──────────────────────────────────────────────────
-                    INFO     Step 1/4: search_logs
-                    INFO     Parameters: {}
-                    INFO     ✓ Success: Found 2115 logs
-                    INFO     📦 Cached 2115 logs
-                    INFO
-                             ──────────────────────────────────────────────────
-                    INFO     Step 2/4: extract_entities
-                    INFO     Parameters: {'entity_types': ['cm']}
-                    INFO     ✓ Auto-injected 2115 cached logs
-                    INFO     Extracting 1 entity types from 2115 log entries
-                    INFO     Search columns: ['_source.log']
-                    INFO     Processing entity type: cm
-                    INFO     Extracted 0 unique entities
-                    INFO     ✓ Success: No entities of types ['cm'] found
-                    INFO
-                             ──────────────────────────────────────────────────
-                    INFO     Step 3/4: find_entity_relationships
-                    INFO     Parameters: {'target_value': 'MAWED07T01', 'related_types': ['rpdname']}
-                    INFO     ✓ Auto-injected 2115 cached logs
-                    INFO     Extracting 1 entity types from 3 log entries
-                    INFO     Search columns: ['_source.log']
-                    INFO     Processing entity type: rpdname
-                    INFO     Extracted 1 unique entities
-                    INFO     ✓ Success: Found 1 related entities for 'MAWED07T01': rpdname: [MAWED07T01]
-                    INFO
-                             ──────────────────────────────────────────────────
-                    INFO     Step 4/4: finalize_answer
-                    INFO     Parameters: {}
-                    INFO     ✓ Finalized: No answer provided...
-                    INFO
-                             ======================================================================
-                    INFO     ✅ ANALYSIS COMPLETE
-                    INFO     Success: True
-                    INFO     Steps: 4/4
-                    INFO     Duration: 4.97s
-                    INFO     ======================================================================
+Next action?
 
-Result:
-  Success: True
-  Steps: 4/4
-  Duration: 4.97s
-  Confidence: 0.80
+[12/04/25 14:22:15] INFO     Generation successful: 11065 chars, took 71.33s
+LLM Response (thinking + JSON):
+<think>
+Okay, let's tackle the user's query step by step. The user wants to find error logs for MAWED07T01 from the last 24 hours.
 
-Answer:
-╭──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╮
-│ No answer provided                                                                                                   │
-╰──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
-✗ Missing keywords: cm, MAWED07T01
+First, I remember that the previous action was search_logs with the...
 
-======================================================================
-SUMMARY
-======================================================================
-┏━━━━━━━━━━━━━━┳━━━━━━━┓
-┃ Metric       ┃ Value ┃
-┡━━━━━━━━━━━━━━╇━━━━━━━┩
-│ Tests Passed │   1/3 │
-│ Success Rate │   33% │
-└──────────────┴───────┘
+Extracted JSON: {"action": "filter_by_time", "params": {"start_time": "now-24h", "end_time": "now"}, "reason": "Filter logs to last 24 hours"}
 
-⚠ PARTIAL SUCCESS
-1/3 tests passed - review failures
+Simulated: Filtered to 80 logs
+
+--- Iteration 3 ---
+Sending: Query: Find error logs for MAWED07T01 from last 24 hours
+
+Previous: ['search_logs → Found 150 logs', 'filter_by_time → Filtered to 80 logs']
+
+Next action?
+
+[12/04/25 14:22:22] INFO     Generation successful: 819 chars, took 5.29s
+LLM Response (thinking + JSON):
+<think>
+Okay, the user wants error logs for MAWED07T01 from the last 24 hours. Let me see where we are.
+
+Previously, they did a search_logs for MAWED07T01 and found 150 logs. Then they filtered by tim...
+
+Extracted JSON: {"action": "filter_by_severity", "params": {"severities": ["ERROR"]}, "reason": "Filter logs to errors only for MAWED07T01"}
+
+Simulated: Filtered to 25 logs
+
+--- Iteration 4 ---
+Sending: Query: Find error logs for MAWED07T01 from last 24 hours
+
+Previous: ['search_logs → Found 150 logs', 'filter_by_time → Filtered to 80 logs', 'filter_by_severity → Filtered to 25 logs']
+
+Next action?
+
+[12/04/25 14:22:33] INFO     Generation successful: 1278 chars, took 8.36s
+LLM Response (thinking + JSON):
+<think>
+Okay, let me try to figure out the next step here. The user wants error logs for MAWED07T01 from the last 24 hours.
+
+Looking at the previous steps, they first did a search_logs for MAWED07T01...
+
+Extracted JSON: {"action": "filter_by_time", "params": {"start_time": "now-24h", "end_time": "now"}, "reason": "Adjust time range to last 24 hours as per query"}
+
+Simulated: Filtered to 80 logs
+
+============================================================
+Test 2: Count unique CM MACs in warning logs
+============================================================
+
+--- Iteration 1 ---
+Sending: Count unique CM MACs in warning logs
+
+[12/04/25 14:23:01] INFO     Generation successful: 4652 chars, took 25.97s
+LLM Response (thinking + JSON):
+<think>
+Okay, the user wants to count unique CM MACs in warning logs. Let me start by understanding the steps needed. First, I need to get all the logs, then filter for warnings, extract the CM MAC ad...
+
+Extracted JSON: {"action": "search_logs", "params": {"value": "", "field": "message"}, "reason": "Load all logs to process"}
+
+Simulated: Found 150 logs
+
+--- Iteration 2 ---
+Sending: Query: Count unique CM MACs in warning logs
+
+Previous: ['search_logs → Found 150 logs']
+
+Next action?
+
+[12/04/25 14:23:12] INFO     Generation successful: 1756 chars, took 9.34s
+LLM Response (thinking + JSON):
+<think>
+Okay, let me try to figure out how to approach this. The user wants to count unique CM MACs in warning logs.
+
+First, I remember that the process starts with using the search_logs tool to load...
+
+Extracted JSON: {"action": "filter_by_severity", "params": {"severities": ["WARN"]}, "reason": "Filter logs to focus on warnings before extracting CM MACs"}
+
+Simulated: Filtered to 25 logs
+
+--- Iteration 3 ---
+Sending: Query: Count unique CM MACs in warning logs
+
+Previous: ['search_logs → Found 150 logs', 'filter_by_severity → Filtered to 25 logs']
+
+Next action?
+
+[12/04/25 14:23:20] INFO     Generation successful: 1199 chars, took 6.39s
+LLM Response (thinking + JSON):
+<think>
+Okay, let me try to figure out the next step here. The user wants to count unique CM MACs in warning logs. So far, they've already searched for logs and filtered by severity to get 25 logs. No...
+
+Extracted JSON: {"action": "extract_entities", "params": {"entity_types": ["cm_mac"]}, "reason": "Extract CM MAC addresses from warning logs to count unique values"}
+
+Simulated: Extracted 15 entities
+
+--- Iteration 4 ---
+Sending: Query: Count unique CM MACs in warning logs
+
+Previous: ['search_logs → Found 150 logs', 'filter_by_severity → Filtered to 25 logs', 'extract_entities → Extracted 15 entities']
+
+Next action?
+
+[12/04/25 14:23:28] INFO     Generation successful: 1041 chars, took 5.83s
+LLM Response (thinking + JSON):
+<think>
+Okay, let's see. The user wants to count unique CM MACs in warning logs. So far, the previous steps have been: search_logs found 150 logs, filter_by_severity reduced that to 25 logs, and extra...
+
+Extracted JSON: {"action": "count_entities", "params": {"entity_type": "cm_mac"}, "reason": "Count unique CM MACs from extracted entities"}
+
+Simulated: Count: 15 unique
 PS C:\Users\AYUSH\work\ai-stuff\test-AI-log-engine>

@@ -20,7 +20,7 @@ class OllamaClient:
         self,
         base_url: str = "http://localhost:11434",
         model: Optional[str] = None,
-        timeout: int = 30,
+        timeout: int = 120,
         max_retries: int = 3
     ):
         """
