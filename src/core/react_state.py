@@ -95,6 +95,7 @@ class ReActState:
         self.filtered_logs: Optional[pd.DataFrame] = None
         self.current_logs: Optional[pd.DataFrame] = None  # Current working dataset
         self.current_summary: Optional[str] = None  # Smart summary of current logs
+        self.last_result: Optional[Any] = None  # Last tool result (list, dict, etc.)
         self.extracted_entities: Dict[str, List[Any]] = {}
         
         # Results
@@ -319,6 +320,16 @@ class ReActState:
         if logs is not None:
             logger.debug(f"Updated current_logs: {len(logs)} logs" + 
                         (f" with smart summary ({len(summary)} chars)" if summary else ""))
+    
+    def update_last_result(self, result: Any) -> None:
+        """
+        Update last tool result (for list/dict/other non-DataFrame results).
+        
+        Args:
+            result: Last tool result data
+        """
+        self.last_result = result
+        logger.debug(f"Updated last_result: {type(result).__name__} ({len(result) if hasattr(result, '__len__') else 'N/A'})")
     
     def update_entities(self, entities: Dict[str, List[Any]]) -> None:
         """

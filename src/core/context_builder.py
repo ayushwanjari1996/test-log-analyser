@@ -99,7 +99,7 @@ class ContextBuilder:
     
     def _format_current_state(self, state: ReActState) -> Dict[str, Any]:
         """
-        Format current state (log summary).
+        Format current state (log summary + available data).
         
         Args:
             state: Current ReAct state
@@ -107,18 +107,26 @@ class ContextBuilder:
         Returns:
             Dictionary with current state information
         """
+        current_state = {}
+        
         # Use smart summary if available (for large datasets)
         if state.current_summary:
-            return {
-                "logs": state.current_summary
-            }
+            current_state["logs"] = state.current_summary
+        else:
+            # Otherwise use the state's built-in log summary (for small datasets)
+            log_summary = state.get_log_summary(max_samples=3)
+            current_state["logs"] = log_summary
         
-        # Otherwise use the state's built-in log summary (for small datasets)
-        log_summary = state.get_log_summary(max_samples=3)
+        # Include last_result if available (e.g., list of values from previous tool)
+        if state.last_result is not None:
+            if isinstance(state.last_result, list):
+                count = len(state.last_result)
+                sample = state.last_result[:5]
+                current_state["last_values"] = f"{count} values available (sample: {sample})"
+            elif isinstance(state.last_result, dict):
+                current_state["last_dict"] = f"Dict with {len(state.last_result)} keys"
         
-        return {
-            "logs": log_summary
-        }
+        return current_state
     
     def _format_entities(self, state: ReActState) -> Dict[str, Any]:
         """
@@ -233,23 +241,38 @@ ITERATION: {context['iteration']}/{context['max_iterations']}
         prompt += "CURRENT STATE:\n"
         
         log_state = context['current_state']['logs']
-        if log_state.get('total_count', 0) > 0:
-            prompt += f"  Total logs: {log_state['total_count']}\n"
-            
-            # Show sample logs
-            if log_state.get('sample_logs'):
-                prompt += "  Sample logs:\n"
-                for i, log in enumerate(log_state['sample_logs'][:3], 1):
-                    # Show key fields only
-                    severity = log.get('severity', 'N/A')
-                    message = log.get('message', '')[:80]
-                    prompt += f"    {i}. [{severity}] {message}...\n"
-            
-            # Show severity distribution
-            if log_state.get('severity_distribution'):
-                prompt += f"  Severity: {log_state['severity_distribution']}\n"
+        
+        # Handle both string (smart summary) and dict (regular summary)
+        if isinstance(log_state, str):
+            # Smart summary - show as-is
+            prompt += log_state + "\n"
+        elif isinstance(log_state, dict):
+            # Regular summary - format fields
+            if log_state.get('total_count', 0) > 0:
+                prompt += f"  Total logs: {log_state['total_count']}\n"
+                
+                # Show sample logs
+                if log_state.get('sample_logs'):
+                    prompt += "  Sample logs:\n"
+                    for i, log in enumerate(log_state['sample_logs'][:3], 1):
+                        # Show key fields only
+                        severity = log.get('severity', 'N/A')
+                        message = log.get('message', '')[:80]
+                        prompt += f"    {i}. [{severity}] {message}...\n"
+                
+                # Show severity distribution
+                if log_state.get('severity_distribution'):
+                    prompt += f"  Severity: {log_state['severity_distribution']}\n"
+            else:
+                prompt += f"  {log_state.get('status', 'No logs loaded')}\n"
         else:
-            prompt += f"  {log_state.get('status', 'No logs loaded')}\n"
+            prompt += "  No logs loaded\n"
+        
+        # Add last_values if available
+        if 'last_values' in context['current_state']:
+            prompt += f"  Last result: {context['current_state']['last_values']}\n"
+        if 'last_dict' in context['current_state']:
+            prompt += f"  Last result: {context['current_state']['last_dict']}\n"
         
         # Add entities
         entities = context['entities']

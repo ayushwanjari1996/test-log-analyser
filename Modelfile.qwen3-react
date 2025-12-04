@@ -65,13 +65,21 @@ OUTPUT:
 13. finalize_answer: STOP and return answer
     {"answer": "complete answer"}
 
-IMPORTANT: 
-- NO "load all logs" step needed!
-- grep_logs finds ONLY matching lines
-- Chain: grep → parse → count/unique
-- For relationships: Use find_relationship_chain (handles multi-hop automatically)
-- For time-based queries: sort_by_time or extract_time_range
-- For stats: summarize_logs or aggregate_by_field
+CRITICAL GREP-BASED WORKFLOW:
+❌ NEVER try to "load all logs" - NO SUCH STEP EXISTS!
+✅ grep_logs DIRECTLY finds what you need
+✅ Use specific patterns: "CmMacAddress", "ERROR", MAC addresses, IPs
+✅ Chain: grep → parse → count/aggregate
+✅ Results auto-pass to next tool
+
+Examples of CORRECT patterns:
+- grep_logs("CmMacAddress") → Find ALL logs with CM MACs
+- grep_logs("ERROR") → Find ALL error logs
+- grep_logs("2c:ab:a4:47:1a:d2") → Find specific MAC
+- grep_logs("MdId") → Find ALL logs with MdId field
+
+❌ WRONG: grep_logs("") or grep_logs("*") → These don't work!
+✅ RIGHT: grep_logs("CmMacAddress") → Finds all relevant logs directly!
 
 JSON FIELDS: CmMacAddress, CpeMacAddress, MdId, Severity, Message, Package, rpdname
 
@@ -131,19 +139,19 @@ Query: "Summarize ERROR logs"
 <think>Done</think>
 {"reasoning": "Complete", "action": "finalize_answer", "params": {"answer": "Found 25 ERROR logs. Top functions: HandleUpstream (10), ProcessFec (8)"}}
 
-Example 3: Count by Severity
-Query: "Count logs by severity"
+Example 3: Find MdId with Most Cable Modems
+Query: "Find MdId with max number of cable modems"
 
-<think>Grep all then aggregate</think>
-{"reasoning": "Need all logs", "action": "grep_logs", "params": {"pattern": ""}}
-→ Found 2115 logs
+<think>Grep logs with CMs</think>
+{"reasoning": "Find logs with CMs", "action": "grep_logs", "params": {"pattern": "CmMacAddress"}}
+→ Found 1000 logs with CmMacAddress
 
-<think>Group by severity</think>
-{"reasoning": "Count by severity", "action": "aggregate_by_field", "params": {"field_name": "Severity", "top_n": 10}}
-→ INFO:1800, DEBUG:280, WARN:30, ERROR:5
+<think>Count by MdId</think>
+{"reasoning": "Count CMs per MdId", "action": "aggregate_by_field", "params": {"field_name": "MdId", "top_n": 1}}
+→ 0x2040000: 250 CMs (highest)
 
 <think>Done</think>
-{"reasoning": "Complete", "action": "finalize_answer", "params": {"answer": "Severity counts: INFO (1800), DEBUG (280), WARN (30), ERROR (5)"}}
+{"reasoning": "Complete", "action": "finalize_answer", "params": {"answer": "MdId 0x2040000 has the most cable modems (250)"}}
 
 CRITICAL REMINDERS:
 - BRIEF thinking: 1-2 sentences MAX in <think> tags

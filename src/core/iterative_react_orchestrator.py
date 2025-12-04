@@ -440,6 +440,14 @@ class IterativeReactOrchestrator:
                 if self.verbose:
                     logger.warning(f"  Tool requires logs but none are loaded")
         
+        # Auto-inject last_result if tool needs "values" parameter and it's not provided
+        has_values_param = any(p.name == "values" for p in tool.parameters)
+        if has_values_param and "values" not in params:
+            if state.last_result is not None and isinstance(state.last_result, list):
+                if self.verbose:
+                    logger.debug(f"  Auto-injecting values: {len(state.last_result)} items")
+                params["values"] = state.last_result
+        
         # Execute tool
         try:
             result = tool.execute(**params)
@@ -506,6 +514,12 @@ class IterativeReactOrchestrator:
                 if self.verbose:
                     logger.debug(f"  Updating entities: {list(result.data.keys())}")
                 state.update_entities(result.data)
+            
+            # Store any other result type (list, dict, etc.) for next tool
+            else:
+                if self.verbose:
+                    logger.debug(f"  Storing last_result: {type(result.data).__name__}")
+                state.update_last_result(result.data)
     
     def _fallback_answer(self, state: ReActState, reason: str) -> str:
         """
