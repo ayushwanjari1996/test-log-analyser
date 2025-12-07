@@ -18,6 +18,30 @@ from ..stream_searcher import StreamSearcher
 logger = logging.getLogger(__name__)
 
 
+def case_insensitive_get(json_obj: dict, field_name: str) -> Any:
+    """
+    Get field from JSON with case-insensitive matching.
+    
+    Args:
+        json_obj: JSON dictionary
+        field_name: Field name to find (case-insensitive)
+        
+    Returns:
+        Field value or None if not found
+    """
+    # Try exact match first (fast path)
+    if field_name in json_obj:
+        return json_obj[field_name]
+    
+    # Try case-insensitive match
+    field_lower = field_name.lower()
+    for key, value in json_obj.items():
+        if key.lower() == field_lower:
+            return value
+    
+    return None
+
+
 class FindRelationshipChainTool(Tool):
     """
     Find relationship chain between start value and target field.

@@ -21,7 +21,7 @@ WORKFLOW:
 
 You must decide: What's the NEXT action?
 
-AVAILABLE TOOLS (13 total):
+AVAILABLE TOOLS (15 total):
 
 SEARCH & PARSE (Grep-based, fast):
 1. grep_logs: Search logs for pattern
@@ -43,26 +43,32 @@ ADVANCED ANALYSIS:
 6. find_relationship_chain: Find multi-hop entity relationships (CPE→RPD→MdId)
    {"start_value": "2c:ab:a4:47:1a:d2", "target_field": "MdId", "max_depth": 4}
 
-7. sort_by_time: Sort logs chronologically
+7. count_unique_per_group: Count UNIQUE values per group (fields in SAME logs)
+   {"group_by": "MdId", "count_field": "CmMacAddress", "top_n": 10}
+
+8. count_via_relationship: Count via chains (fields in DIFFERENT logs)
+   {"source_field": "CpeMacAddress", "target_field": "MdId", "max_depth": 4, "top_n": 10}
+
+9. sort_by_time: Sort logs chronologically
    {"order": "asc"}  // or "desc"
 
-8. extract_time_range: Filter logs by time window
-   {"start_time": "2025-04-23T15:30:00", "end_time": "2025-04-23T15:31:00"}
+10. extract_time_range: Filter logs by time window
+    {"start_time": "2025-04-23T15:30:00", "end_time": "2025-04-23T15:31:00"}
 
-9. summarize_logs: Get statistical summary
-   {"detail_level": "basic"}  // or "full"
+11. summarize_logs: Get statistical summary
+    {"detail_level": "basic"}  // or "full"
 
-10. aggregate_by_field: Group by field and count (like SQL GROUP BY)
+12. aggregate_by_field: Group by field and count (like SQL GROUP BY)
     {"field_name": "Severity", "top_n": 10}
 
-11. analyze_logs: Deep LLM-powered analysis
+13. analyze_logs: Deep LLM-powered analysis
     {"focus": "errors"}  // or "patterns", "timeline", "all"
 
 OUTPUT:
-12. return_logs: Display log samples
+14. return_logs: Display log samples
     {"max_samples": 5}
 
-13. finalize_answer: STOP and return answer
+15. finalize_answer: STOP and return answer
     {"answer": "complete answer"}
 
 CRITICAL GREP-BASED WORKFLOW:
@@ -139,23 +145,21 @@ Query: "Summarize ERROR logs"
 <think>Done</think>
 {"reasoning": "Complete", "action": "finalize_answer", "params": {"answer": "Found 25 ERROR logs. Top functions: HandleUpstream (10), ProcessFec (8)"}}
 
-Example 3: Find MdId with Most Cable Modems
-Query: "Find MdId with max number of cable modems"
+Example 3: Count Unique CMs per MdId
+Query: "Count unique CM MACs/IPs per MdId"
 
-<think>Grep logs with CMs</think>
+<think>Load logs with both fields</think>
 {"reasoning": "Find logs with CMs", "action": "grep_logs", "params": {"pattern": "CmMacAddress"}}
 → Found 1000 logs with CmMacAddress
 
-<think>Count by MdId</think>
-{"reasoning": "Count CMs per MdId", "action": "aggregate_by_field", "params": {"field_name": "MdId", "top_n": 1}}
-→ 0x2040000: 250 CMs (highest)
+<think>Count unique CMs per group</think>
+{"reasoning": "Count unique per MdId", "action": "count_unique_per_group", "params": {"group_by": "MdId", "count_field": "CmMacAddress", "top_n": 5}}
+→ 0x2040000: 250 unique CMs, 0x3030000: 180 unique CMs
 
 <think>Done</think>
-{"reasoning": "Complete", "action": "finalize_answer", "params": {"answer": "MdId 0x2040000 has the most cable modems (250)"}}
+{"reasoning": "Complete", "action": "finalize_answer", "params": {"answer": "MdId 0x2040000 has 250 unique CMs (most), 0x3030000 has 180"}}
 
 CRITICAL REMINDERS:
-- BRIEF thinking: 1-2 sentences MAX in <think> tags
-- BRIEF reasoning: 1 sentence MAX in JSON  
 - Return JSON IMMEDIATELY after thinking
 - Use finalize_answer when done
 - Logs are auto-injected (don't pass them manually)
@@ -164,7 +168,7 @@ BAD (too verbose):
 <think>Okay let's think about this query carefully. The user wants to know about CM MACs. First I should consider whether we have logs loaded. If not, I need to load them. Then I should think about filtering...</think>
 
 GOOD (concise):
-<think>Load logs first</think>
+<think>.....</think>
 {"reasoning": "Need logs", "action": "search_logs", "params": {"value": ""}}
 """
 

@@ -5,8 +5,9 @@ Builds curated context for LLM at each iteration, including:
 - Query
 - Tool history (last N actions)
 - Current log state (summary, not full logs)
-- Available tools
 - Extracted entities
+
+Note: Tool definitions are in the Modelfile, NOT in the prompt.
 """
 
 import logging
@@ -56,8 +57,7 @@ class ContextBuilder:
             "max_iterations": state.max_iterations,
             "tool_history": self._format_tool_history(state),
             "current_state": self._format_current_state(state),
-            "entities": self._format_entities(state),
-            "available_tools": self._format_available_tools()
+            "entities": self._format_entities(state)
         }
         
         return context
@@ -150,15 +150,6 @@ class ContextBuilder:
             }
         
         return formatted
-    
-    def _format_available_tools(self) -> str:
-        """
-        Format available tools description.
-        
-        Returns:
-            String with tool descriptions
-        """
-        return self.registry.get_tools_description(format="text")
     
     def _summarize_result(self, result: Any) -> str:
         """
@@ -298,14 +289,8 @@ FORMAT (KEEP BRIEF):
 }
 
 CRITICAL: 
-- Thinking: MAX 1-2 sentences
-- Reasoning: MAX 1 sentence
-- Return JSON immediately
-
+- Return JSON ONLY
 """
-        
-        # Add available tools (condensed)
-        prompt += context['available_tools']
         
         return prompt
 

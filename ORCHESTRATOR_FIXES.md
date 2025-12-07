@@ -201,3 +201,4 @@ Should now work correctly! ✅
 - grep_logs → aggregate_by_field works
 - No more "load all logs" confusion
 
+

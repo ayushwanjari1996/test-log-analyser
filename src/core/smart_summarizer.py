@@ -348,69 +348,50 @@ class SmartSampler:
 
 class SummaryFormatter:
     """
-    Format aggregated data into human-readable summary for LLM.
+    Format aggregated data into human-readable METADATA summary for LLM.
+    
+    Shows WHAT data exists (metadata), NOT what it contains (analysis).
     """
     
     def format(self, stats: Dict[str, Any], samples: List[Dict[str, Any]]) -> str:
         """
-        Format summary as compact text.
+        Format summary as compact METADATA.
+        
+        Shows: dataset size, available fields, time range, data quality
+        Does NOT show: specific values, top items, distributions
         
         Args:
             stats: Aggregation statistics
             samples: Sample logs
             
         Returns:
-            Formatted summary string
+            Formatted metadata summary string
         """
         lines = []
         
-        # Header
-        lines.append(f"📊 Found {stats['total_count']} logs")
+        # Dataset size
+        lines.append(f"📊 Dataset: {stats['total_count']} logs loaded")
         
-        # Time range
+        # Time range (metadata)
         if stats.get('time_range'):
             tr = stats['time_range']
-            lines.append(f"⏱️  Time: {tr.get('earliest', 'N/A')} → {tr.get('latest', 'N/A')} (span: {tr.get('span', 'N/A')})")
+            lines.append(f"⏱️  Time Range: {tr.get('earliest', 'N/A')} → {tr.get('latest', 'N/A')}")
+            lines.append(f"   Span: {tr.get('span', 'N/A')}")
         
-        # Entities
+        # Available fields (metadata only - no values!)
         if stats.get('entities'):
-            lines.append("\n🔍 Key Entities:")
+            lines.append("\n🔍 Available Fields:")
             for entity_type, entity_data in stats['entities'].items():
                 unique = entity_data['unique_count']
-                total = entity_data['total_count']
-                top_5 = entity_data.get('top_5', [])
-                
-                top_str = ", ".join([f"{val}({cnt})" for val, cnt in top_5[:3]])
-                more = f" +{len(top_5)-3} more" if len(top_5) > 3 else ""
-                
-                lines.append(f"  • {entity_type}: {unique} unique, {total} total | Top: {top_str}{more}")
+                lines.append(f"  • {entity_type}: {unique} unique values available")
         
-        # Severity distribution
+        # Data quality indicators (generic)
         if stats.get('severity_dist'):
-            sev_str = ", ".join([f"{k}:{v}" for k, v in stats['severity_dist'].items()])
-            lines.append(f"\n⚠️  Severities: {sev_str}")
-        
-        # Top functions
-        if stats.get('top_functions'):
-            func_str = ", ".join([f"{k}({v})" for k, v in list(stats['top_functions'].items())[:3]])
-            lines.append(f"\n⚙️  Top Functions: {func_str}")
-        
-        # Sample logs
-        if samples:
-            lines.append(f"\n📝 Top {len(samples)} Sample Logs:")
-            for i, sample in enumerate(samples[:10], 1):
-                severity = sample.get('Severity', 'N/A')
-                function = sample.get('Function', 'N/A')
-                message = sample.get('Message', '')
-                
-                # Truncate message if too long
-                if len(message) > 60:
-                    message = message[:57] + "..."
-                
-                lines.append(f"  {i}. [{severity}] {function}: {message}")
+            sev_types = list(stats['severity_dist'].keys())
+            lines.append(f"\n📝 Log Types: {', '.join(sev_types)}")
         
         # Footer
-        lines.append("\n✅ Full data cached for next tool")
+        lines.append("\n✅ Full dataset cached and ready for analysis tools")
         
         return "\n".join(lines)
 

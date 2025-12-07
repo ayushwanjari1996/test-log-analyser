@@ -195,18 +195,22 @@ class IterativeReactOrchestrator:
                 # Step 2: Get LLM decision (now returns decision + raw response)
                 decision, raw_response = self._get_llm_decision(context)
                 
-                # Display what we fed to LLM
-                print(f"\n[What We Fed to LLM]")
+                # Display what we fed to LLM (FULL)
+                print(f"\n{'='*70}")
+                print(f"[FULL PROMPT TO LLM]")
+                print(f"{'='*70}")
                 prompt = self.context_builder.build_prompt(context)
-                print(prompt[:500] + "..." if len(prompt) > 500 else prompt)
+                print(prompt)
                 
-                # Display what LLM returned
-                print(f"\n[What LLM Returned]")
+                # Display what LLM returned (FULL)
+                print(f"\n{'='*70}")
+                print(f"[FULL LLM RESPONSE]")
+                print(f"{'='*70}")
                 print(raw_response)
+                print(f"{'='*70}")
                 
-                # Display parsed decision
+                # Display parsed decision (compact)
                 print(f"\n[Parsed Decision]")
-                print(f"  Reasoning: {decision.get('reasoning', 'N/A')}")
                 print(f"  Action: {decision.get('action', 'N/A')}")
                 print(f"  Params: {decision.get('params', {})}")
                 
@@ -297,7 +301,10 @@ class IterativeReactOrchestrator:
         except Exception as e:
             logger.error(f"LLM decision failed: {e}")
             if 'response' in locals():
-                logger.error(f"Response was: {response[:200]}...")
+                print(f"\n[DEBUG] Full raw response that failed to parse:")
+                print(f"Length: {len(response)} chars")
+                print(response)
+                print(f"[END DEBUG]")
             raise LLMError(f"Failed to get LLM decision: {e}")
     
     def _parse_llm_response(self, response: str) -> Dict[str, Any]:
