@@ -40,3 +40,6 @@ logs/
 
 # Config overrides
 config/local_*
+
+# Production test data (backup)
+test_prod.csv
