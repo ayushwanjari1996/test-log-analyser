@@ -176,7 +176,7 @@ class SummarizeLogsTool(Tool):
     
     def _format_summary_message(self, summary: Dict[str, Any]) -> str:
         """Format summary as human-readable message."""
-        msg = f"Summary: {summary['total_count']} logs"
+        msg = f"[METADATA] Summary: {summary['total_count']} logs"
         
         if "time_range" in summary:
             tr = summary["time_range"]
@@ -282,7 +282,7 @@ class AggregateByFieldTool(Tool):
             if len(top_items) > 3:
                 top_str += f" (and {len(top_items)-3} more)"
             
-            msg = f"Grouped by '{field_name}': {total_unique} unique values, {total_occurrences} total occurrences. Top: {top_str}"
+            msg = f"[FINAL AGGREGATION] Grouped by '{field_name}': {total_unique} unique values, {total_occurrences} total occurrences. Top: {top_str}"
             
             return ToolResult(
                 success=True,
@@ -292,7 +292,8 @@ class AggregateByFieldTool(Tool):
                     "field": field_name,
                     "unique_count": total_unique,
                     "total_count": total_occurrences,
-                    "top_n": top_n
+                    "top_n": top_n,
+                    "data_type": "aggregated"
                 }
             )
             
@@ -377,8 +378,8 @@ class AnalyzeLogsTool(Tool):
             return ToolResult(
                 success=True,
                 data=analysis,
-                message=f"Analysis complete: {response[:200]}...",
-                metadata={"log_count": len(sampled), "focus": focus}
+                message=f"[LLM ANALYSIS] {response[:200]}...",
+                metadata={"log_count": len(sampled), "focus": focus, "data_type": "llm_insight"}
             )
             
         except Exception as e:

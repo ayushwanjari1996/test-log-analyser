@@ -115,12 +115,13 @@ class FindRelationshipChainTool(Tool):
                         "path": result["path"],
                         "depth": result["depth"]
                     },
-                    message=f"Found {target_field}='{result['value']}' via path: {path_str}",
+                    message=f"[FINAL] Found {target_field}='{result['value']}' via path: {path_str}",
                     metadata={
                         "target_field": target_field,
                         "value": result["value"],
                         "depth": result["depth"],
-                        "path": result["path"]
+                        "path": result["path"],
+                        "data_type": "final_value"
                     }
                 )
             else:

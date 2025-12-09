@@ -80,8 +80,8 @@ class SortByTimeTool(Tool):
             return ToolResult(
                 success=True,
                 data=sorted_logs,
-                message=f"Sorted {len(sorted_logs)} logs {direction}",
-                metadata={"count": len(sorted_logs), "order": order}
+                message=f"[RAW DATA] Sorted {len(sorted_logs)} log entries {direction}",
+                metadata={"count": len(sorted_logs), "order": order, "data_type": "raw_logs"}
             )
             
         except Exception as e:
@@ -206,11 +206,12 @@ class ExtractTimeRangeTool(Tool):
             return ToolResult(
                 success=True,
                 data=filtered,
-                message=f"Extracted {len(filtered)} logs between {start_time} and {end_time}",
+                message=f"[RAW DATA] Extracted {len(filtered)} log entries between {start_time} and {end_time}",
                 metadata={
                     "count": len(filtered),
                     "start": str(start_dt),
-                    "end": str(end_dt)
+                    "end": str(end_dt),
+                    "data_type": "raw_logs"
                 }
             )
             

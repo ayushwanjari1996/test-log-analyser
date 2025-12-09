@@ -105,10 +105,11 @@ class ReturnLogsTool(Tool):
         return ToolResult(
             success=True,
             data={"formatted": formatted_output, "count": count},
-            message=f"Formatted {count} logs for display",
+            message=f"[FORMATTED OUTPUT] {count} logs formatted for display",
             metadata={
                 "count": count,
-                "samples_shown": sample_count
+                "samples_shown": sample_count,
+                "data_type": "formatted_display"
             }
         )
     

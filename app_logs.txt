@@ -1,3 +1,49 @@
+PS C:\Users\AYUSH\work\ai-stuff\test-AI-log-engine> python chat.py
+
+Initializing orchestrator...
+[12/07/25 21:59:18] INFO     Initializing IterativeReactOrchestrator
+                    INFO       Log file: test.csv
+                    INFO       Model: qwen3-react
+                    INFO       Max iterations: 10
+                    INFO     Initialized OllamaClient (base_url=http://localhost:11434, model=qwen3-react)
+                    INFO     LLM client initialized: qwen3-react
+                    INFO     StreamSearcher initialized for test.csv
+                    INFO     StreamSearcher initialized for test.csv
+                    INFO     StreamSearcher initialized for test.csv
+                    INFO     Initialized OllamaClient (base_url=http://localhost:11434, model=qwen3-loganalyzer)
+                    INFO     Registered 15 tools
+                    INFO     IterativeReactOrchestrator ready with SmartSummarizer
+✓ Orchestrator initialized
+
+╭──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╮
+│ ┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓ │
+│ ┃                                      🤖 AI Log Analyzer - Interactive Chat                                       ┃ │
+│ ┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛ │
+│                                                                                                                      │
+│ Orchestrator: Iterative ReAct Log File: test.csv Max Iterations: 10                                                  │
+│                                                                                                                      │
+│                                                                                                                      │
+│                                                      Commands:                                                       │
+│                                                                                                                      │
+│  • Type your question naturally (e.g., "count all error logs")                                                       │
+│  • /help - Show this help                                                                                            │
+│  • /history - View chat history                                                                                      │
+│  • /stats - Show session statistics                                                                                  │
+│  • /clear - Clear screen                                                                                             │
+│  • /exit or /quit - Exit chat                                                                                        │
+│                                                                                                                      │
+│                                                                                                                      │
+│                                                   Example Queries:                                                   │
+│                                                                                                                      │
+│  • "count all logs"                                                                                                  │
+│  • "show error logs"                                                                                                 │
+│  • "count unique CM MACs"                                                                                            │
+│  • "find logs for MAWED07T01"                                                                                        │
+│  • "list all RPDs in warning logs"                                                                                   │
+│                                                                                                                      │
+│ Ready to analyze! 🚀                                                                                                 │
+╰──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
+
 You: count total number of cpe devices
 Thinking...
 
@@ -11,7 +57,7 @@ Starting iterative analysis (max 10 iterations)...
 ITERATION 1/10
 Query: count total number of cpe devices
 ======================================================================
-[12/07/25 20:22:36] INFO     Generation successful: 178 chars, took 5.77s
+[12/07/25 21:59:32] INFO     Generation successful: 615 chars, took 10.12s
 
 ======================================================================
 [FULL PROMPT TO LLM]
@@ -24,8 +70,7 @@ ITERATION: 1/10
 PREVIOUS ACTIONS: None (first iteration)
 
 CURRENT STATE:
-  No logs loaded
-
+  No logs loaded yet
 DECISION POINT:
 - Have enough data? → finalize_answer
 - Need more data? → call next tool
@@ -45,10 +90,10 @@ CRITICAL:
 ======================================================================
 [FULL LLM RESPONSE]
 ======================================================================
-<think>Need to find CPE devices first. Let's search for CPE MAC addresses.
+<think>Okay, the user wants to count the total number of CPE devices. First, I need to find all logs that mention CPE devices. The CPE devices are likely identified by their MAC addresses, so I should search for logs containing "CpeMacAddress". Once I have those logs, I can extract the unique MAC addresses to count the distinct devices. Since the user asked for the total number, I need to make sure each MAC is counted once. Let me start by using the grep_logs tool to find all logs with "CpeMacAddress".
 </think>
 
-{"reasoning": "Find CPE MACs", "action": "grep_logs", "params": {"pattern": "CpeMacAddress"}}
+{"reasoning": "Find CPE MAC logs", "action": "grep_logs", "params": {"pattern": "CpeMacAddress"}}
 ======================================================================
 
 [Parsed Decision]
@@ -58,13 +103,13 @@ CRITICAL:
                     INFO     Found 39 matches out of 2115 lines scanned
 
 [Tool Result]
-  ✓ Found 39 logs matching 'CpeMacAddress'
+  ✓ [RAW DATA] Found 39 log entries matching 'CpeMacAddress' - may contain duplicates
 
 ======================================================================
 ITERATION 2/10
 Query: count total number of cpe devices
 ======================================================================
-[12/07/25 20:22:44] INFO     Generation successful: 531 chars, took 6.07s
+[12/07/25 21:59:37] INFO     Generation successful: 128 chars, took 2.29s
 
 ======================================================================
 [FULL PROMPT TO LLM]
@@ -76,15 +121,57 @@ ITERATION: 2/10
 
 PREVIOUS ACTIONS:
   Step 1: grep_logs({'pattern': 'CpeMacAddress'})
-    → Found 39 logs matching 'CpeMacAddress'
+    → [RAW DATA] Found 39 log entries matching 'CpeMacAddress' - may contain duplicates
 
 CURRENT STATE:
-  Total logs: 39
-  Sample logs:
-    1. [N/A] ...
-    2. [N/A] ...
-    3. [N/A] ...
+  Logs loaded: 39 entries (DataFrame)
 
+  Sample log structure (showing 2 of 39):
+    Sample 1:
+    {
+      "Role": "active",
+      "Severity": "DEBUG",
+      "Package": "ulc-mulpi",
+      "Version": "1.48-1011.48",
+      "File": "PerfMgr.cpp:1150",
+      "Logger": "ulcmulpid.PerfMgr",
+      "Function": "ProcEvAddCpe",
+      "Message": "ProcEvAddCpe",
+      "CmMacAddress": "c8:63:fc:15:41:6c",
+      "CpeMacAddress": "c8:63:fc:15:41:6e",
+      "ESafeType": "eRouter",
+      "BundleId": "1",
+      "SubBundleId": "0",
+      "NsiVlanId": "50",
+      "DhcpNsiVlanId": "0"
+    }
+    Sample 2:
+    {
+      "Role": "active",
+      "Severity": "DEBUG",
+      "Package": "ulc-mulpi",
+      "Version": "1.48-1011.48",
+      "File": "PerfMgr.cpp:1150",
+      "Logger": "ulcmulpid.PerfMgr",
+      "Function": "ProcEvAddCpe",
+      "Message": "ProcEvAddCpe",
+      "CmMacAddress": "c8:63:fc:15:41:6c",
+      "CpeMacAddress": "c8:63:fc:15:41:6e",
+      "ESafeType": "eRouter",
+      "BundleId": "1",
+      "SubBundleId": "0",
+      "NsiVlanId": "50",
+      "DhcpNsiVlanId": "0"
+    }
+
+  Available fields (grouped by entity):
+    Package: Package
+    CM: CmMacAddress
+    CPE: CpeMacAddress
+    System/Other: Role, Severity, Version, File, Logger (+7 more)
+  ⚠️ Fields are INSIDE logs - use parse_json_field(logs, 'FieldName') to extract values
+
+  💡 HINT: Query asks for unique CPE values. Available CPE fields: CpeMacAddress. Parse the field that uniquely identifies the entity.
 DECISION POINT:
 - Have enough data? → finalize_answer
 - Need more data? → call next tool
@@ -104,23 +191,128 @@ CRITICAL:
 ======================================================================
 [FULL LLM RESPONSE]
 ======================================================================
-<think>Okay, I need to count the total number of CPE devices. The previous step used grep_logs to find logs with 'CpeMacAddress' and found 39 logs. Since each log entry likely represents a unique CPE device based on its MAC address, the count of these logs should give the total number of CPE devices. Therefore, I can finalize the answer with the count of 39.
+<think>
 </think>
 
-{"reasoning": "39 logs match CpeMacAddress, likely representing unique CPE devices", "action": "finalize_answer", "params": {"answer": "Total CPE devices: 39"}}
+{"reasoning": "Count unique CPE devices", "action": "extract_unique", "params": {"values": ["CpeMacAddress"]}}
+======================================================================
+
+[Parsed Decision]
+  Action: extract_unique
+  Params: {'values': ['CpeMacAddress']}
+
+[Tool Result]
+  ✓ [FINAL] 1 UNIQUE values (deduplicated from 1 raw entries)
+
+======================================================================
+ITERATION 3/10
+Query: count total number of cpe devices
+======================================================================
+[12/07/25 21:59:41] INFO     Generation successful: 147 chars, took 2.46s
+
+======================================================================
+[FULL PROMPT TO LLM]
+======================================================================
+You are analyzing logs to answer a query. Decide the NEXT action.
+
+QUERY: count total number of cpe devices
+ITERATION: 3/10
+
+PREVIOUS ACTIONS:
+  Step 1: grep_logs({'pattern': 'CpeMacAddress'})
+    → [RAW DATA] Found 39 log entries matching 'CpeMacAddress' - may contain duplicates
+  Step 2: extract_unique({'values': ['CpeMacAddress']})
+    → [FINAL] 1 UNIQUE values (deduplicated from 1 raw entries)
+
+CURRENT STATE:
+  Logs loaded: 39 entries (DataFrame)
+
+  Sample log structure (showing 2 of 39):
+    Sample 1:
+    {
+      "Role": "active",
+      "Severity": "DEBUG",
+      "Package": "ulc-mulpi",
+      "Version": "1.48-1011.48",
+      "File": "PerfMgr.cpp:1150",
+      "Logger": "ulcmulpid.PerfMgr",
+      "Function": "ProcEvAddCpe",
+      "Message": "ProcEvAddCpe",
+      "CmMacAddress": "c8:63:fc:15:41:6c",
+      "CpeMacAddress": "c8:63:fc:15:41:6e",
+      "ESafeType": "eRouter",
+      "BundleId": "1",
+      "SubBundleId": "0",
+      "NsiVlanId": "50",
+      "DhcpNsiVlanId": "0"
+    }
+    Sample 2:
+    {
+      "Role": "active",
+      "Severity": "DEBUG",
+      "Package": "ulc-mulpi",
+      "Version": "1.48-1011.48",
+      "File": "PerfMgr.cpp:1150",
+      "Logger": "ulcmulpid.PerfMgr",
+      "Function": "ProcEvAddCpe",
+      "Message": "ProcEvAddCpe",
+      "CmMacAddress": "c8:63:fc:15:41:6c",
+      "CpeMacAddress": "c8:63:fc:15:41:6e",
+      "ESafeType": "eRouter",
+      "BundleId": "1",
+      "SubBundleId": "0",
+      "NsiVlanId": "50",
+      "DhcpNsiVlanId": "0"
+    }
+
+  Available fields (grouped by entity):
+    Package: Package
+    CM: CmMacAddress
+    CPE: CpeMacAddress
+    System/Other: Role, Severity, Version, File, Logger (+7 more)
+  ⚠️ Fields are INSIDE logs - use parse_json_field(logs, 'FieldName') to extract values
+
+  Last result: 1 values (sample: ['CpeMacAddress'])
+
+  💡 HINT: Query asks for unique CPE values. Available CPE fields: CpeMacAddress. Parse the field that uniquely identifies the entity.
+DECISION POINT:
+- Have enough data? → finalize_answer
+- Need more data? → call next tool
+
+FORMAT (KEEP BRIEF):
+<think>1-2 sentence max</think>
+{
+  "reasoning": "one sentence",
+  "action": "tool_name",
+  "params": {dict}
+}
+
+CRITICAL:
+- Return JSON ONLY
+
+
+======================================================================
+[FULL LLM RESPONSE]
+======================================================================
+<think>
+</think>
+
+{"reasoning": "Unique CPE devices counted", "action": "finalize_answer", "params": {"answer": "Total 1 unique CPE device found"}}
 ======================================================================
 
 [Parsed Decision]
   Action: finalize_answer
-  Params: {'answer': 'Total CPE devices: 39'}
+  Params: {'answer': 'Total 1 unique CPE device found'}
 
-✓ FINAL ANSWER: Total CPE devices: 39
+✓ FINAL ANSWER: Total 1 unique CPE device found
 ======================================================================
 
 ======================================================================
 ✓ SUCCESS
-Answer: Total CPE devices: 39
-Iterations: 2/10
+Answer: Total 1 unique CPE device found
+Iterations: 3/10
 ======================================================================
 
-Assistant: Total CPE devices: 39
+Assistant: Total 1 unique CPE device found
+
+You:

@@ -14,6 +14,7 @@ import logging
 from typing import Dict, Any, List
 from .react_state import ReActState
 from .tool_registry import ToolRegistry
+from .entity_field_mapper import EntityFieldMapper
 
 logger = logging.getLogger(__name__)
 
@@ -29,16 +30,18 @@ class ContextBuilder:
     - Show sample logs (default: 3)
     """
     
-    def __init__(self, registry: ToolRegistry, max_history: int = 5):
+    def __init__(self, registry: ToolRegistry, max_history: int = 5, config_dir: str = "config"):
         """
         Initialize context builder.
         
         Args:
             registry: Tool registry for available tools
             max_history: Maximum number of historical actions to include
+            config_dir: Directory containing configuration files
         """
         self.registry = registry
         self.max_history = max_history
+        self.entity_mapper = EntityFieldMapper(config_dir)
         logger.info(f"ContextBuilder initialized (max_history={max_history})")
     
     def build_context(self, state: ReActState) -> Dict[str, Any]:
@@ -57,7 +60,8 @@ class ContextBuilder:
             "max_iterations": state.max_iterations,
             "tool_history": self._format_tool_history(state),
             "current_state": self._format_current_state(state),
-            "entities": self._format_entities(state)
+            "entities": self._format_entities(state),
+            "state": state  # Include state object for schema-aware formatting
         }
         
         return context
@@ -151,6 +155,126 @@ class ContextBuilder:
         
         return formatted
     
+    def _format_schema_aware_state(self, state: ReActState, context: Dict[str, Any]) -> str:
+        """
+        Format current state with schema awareness.
+        Shows sample logs, available fields, extracted data, and smart hints.
+        
+        Args:
+            state: Current ReAct state
+            context: Context dictionary
+            
+        Returns:
+            Formatted state string
+        """
+        lines = []
+        
+        # 1. Logs loaded?
+        if state.current_logs is not None and len(state.current_logs) > 0:
+            count = len(state.current_logs)
+            lines.append(f"  Logs loaded: {count} entries (DataFrame)")
+            
+            # Show sample logs for structure
+            if state.log_samples:
+                lines.append(f"\n  Sample log structure (showing {len(state.log_samples)} of {count}):")
+                for i, sample in enumerate(state.log_samples, 1):
+                    # Indent each line of the JSON
+                    indented = "\n    ".join(sample.split("\n"))
+                    lines.append(f"    Sample {i}:\n    {indented}")
+            
+            # Show available fields grouped by entity type
+            if state.available_fields:
+                grouped = self.entity_mapper.group_fields_by_entity(state.available_fields)
+                
+                lines.append(f"\n  Available fields (grouped by entity):")
+                for entity_type, fields in grouped.items():
+                    if entity_type == "other":
+                        label = "System/Other"
+                    else:
+                        label = self.entity_mapper.get_entity_label(entity_type)
+                    
+                    fields_str = ", ".join(fields[:5])
+                    if len(fields) > 5:
+                        fields_str += f" (+{len(fields)-5} more)"
+                    
+                    lines.append(f"    {label}: {fields_str}")
+                
+                lines.append("  ⚠️ Fields are INSIDE logs - use parse_json_field(logs, 'FieldName') to extract values")
+            
+            # Show extracted fields status
+            if state.extracted_fields:
+                lines.append(f"\n  Extracted fields:")
+                for field, info in state.extracted_fields.items():
+                    status = "UNIQUE" if info.get("unique") else "raw (may have duplicates)"
+                    lines.append(f"    - {field}: {info['count']} {status} values (in {info['stored_in']})")
+        else:
+            lines.append("  No logs loaded yet")
+        
+        # 2. Last result (non-DataFrame data)
+        if state.last_result is not None:
+            if isinstance(state.last_result, list):
+                count = len(state.last_result)
+                sample = state.last_result[:3]
+                lines.append(f"\n  Last result: {count} values (sample: {sample})")
+            elif isinstance(state.last_result, dict):
+                lines.append(f"\n  Last result: Dict with {len(state.last_result)} keys")
+        
+        # 3. Smart hints based on query + state
+        hint = self._generate_smart_hint(state, context)
+        if hint:
+            lines.append(f"\n  💡 HINT: {hint}")
+        
+        return "\n".join(lines)
+    
+    def _generate_smart_hint(self, state: ReActState, context: Dict[str, Any]) -> str:
+        """
+        Generate context-aware hints based on query intent and current state.
+        Uses entity mappings for intelligent field suggestion.
+        
+        Args:
+            state: Current ReAct state
+            context: Context dictionary
+            
+        Returns:
+            Hint string or empty string
+        """
+        query = state.original_query.lower()
+        
+        # Detect which entities are mentioned in the query
+        detected_entities = self.entity_mapper.detect_entities_in_query(query)
+        
+        # Query asks for unique/count
+        if any(word in query for word in ["unique", "count", "how many", "total", "number"]):
+            # Have logs but no extracted values?
+            if state.current_logs is not None and not state.extracted_fields:
+                # If we detected entity types, show relevant fields
+                if detected_entities and state.available_fields:
+                    relevant_fields = []
+                    for entity_type in detected_entities:
+                        fields = self.entity_mapper.get_fields_for_entity(entity_type, state.available_fields)
+                        relevant_fields.extend(fields)
+                    
+                    if relevant_fields:
+                        entity_labels = [self.entity_mapper.get_entity_label(e) for e in detected_entities]
+                        fields_str = ", ".join(relevant_fields)
+                        return f"Query asks for unique {'/'.join(entity_labels)} values. Available {'/'.join(entity_labels)} fields: {fields_str}. Parse the field that uniquely identifies the entity."
+                
+                return "Query needs unique values. Logs loaded but no fields extracted yet. Use parse_json_field to extract the field you need."
+            
+            # Have raw values but not deduplicated?
+            if state.last_result and isinstance(state.last_result, list):
+                # Check if it's been deduplicated
+                is_unique = any(info.get("unique") for info in state.extracted_fields.values())
+                if not is_unique:
+                    return "Query needs unique count. Raw values extracted but not deduplicated. Next: count_values(values)"
+        
+        # Query asks for relationship/connection (e.g., "count X per Y")
+        if any(word in query for word in ["per", "for each", "associated", "linked", "by"]):
+            if state.current_logs is not None:
+                return "Query involves relationships between fields. Consider using count_unique_per_group or count_via_relationship"
+        
+        return ""
+    
     def _summarize_result(self, result: Any) -> str:
         """
         Create compact summary of tool result.
@@ -228,51 +352,9 @@ ITERATION: {context['iteration']}/{context['max_iterations']}
         else:
             prompt += "PREVIOUS ACTIONS: None (first iteration)\n\n"
         
-        # Add current state
+        # Add current state with schema awareness
         prompt += "CURRENT STATE:\n"
-        
-        log_state = context['current_state']['logs']
-        
-        # Handle both string (smart summary) and dict (regular summary)
-        if isinstance(log_state, str):
-            # Smart summary - show as-is
-            prompt += log_state + "\n"
-        elif isinstance(log_state, dict):
-            # Regular summary - format fields
-            if log_state.get('total_count', 0) > 0:
-                prompt += f"  Total logs: {log_state['total_count']}\n"
-                
-                # Show sample logs
-                if log_state.get('sample_logs'):
-                    prompt += "  Sample logs:\n"
-                    for i, log in enumerate(log_state['sample_logs'][:3], 1):
-                        # Show key fields only
-                        severity = log.get('severity', 'N/A')
-                        message = log.get('message', '')[:80]
-                        prompt += f"    {i}. [{severity}] {message}...\n"
-                
-                # Show severity distribution
-                if log_state.get('severity_distribution'):
-                    prompt += f"  Severity: {log_state['severity_distribution']}\n"
-            else:
-                prompt += f"  {log_state.get('status', 'No logs loaded')}\n"
-        else:
-            prompt += "  No logs loaded\n"
-        
-        # Add last_values if available
-        if 'last_values' in context['current_state']:
-            prompt += f"  Last result: {context['current_state']['last_values']}\n"
-        if 'last_dict' in context['current_state']:
-            prompt += f"  Last result: {context['current_state']['last_dict']}\n"
-        
-        # Add entities
-        entities = context['entities']
-        if entities.get('status') != "No entities extracted yet":
-            prompt += "\n  Entities extracted:\n"
-            for entity_type, info in entities.items():
-                if isinstance(info, dict):
-                    prompt += f"    {entity_type}: {info['count']} unique values\n"
-        
+        prompt += self._format_schema_aware_state(context["state"], context)
         prompt += "\n"
         
         # Add decision instructions

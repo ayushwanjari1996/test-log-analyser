@@ -98,6 +98,11 @@ class ReActState:
         self.last_result: Optional[Any] = None  # Last tool result (list, dict, etc.)
         self.extracted_entities: Dict[str, List[Any]] = {}
         
+        # Schema awareness
+        self.log_samples: List[str] = []  # Sample logs to show structure
+        self.available_fields: List[str] = []  # Fields available in logs
+        self.extracted_fields: Dict[str, Dict[str, Any]] = {}  # Track what's been extracted
+        
         # Results
         self.answer: Optional[str] = None
         self.confidence: float = 0.0
@@ -318,8 +323,48 @@ class ReActState:
         self.current_logs = logs
         self.current_summary = summary
         if logs is not None:
+            # Auto-extract schema
+            self._extract_schema(logs)
             logger.debug(f"Updated current_logs: {len(logs)} logs" + 
                         (f" with smart summary ({len(summary)} chars)" if summary else ""))
+    
+    def _extract_schema(self, logs: pd.DataFrame, max_samples: int = 2) -> None:
+        """
+        Extract schema information from logs: sample logs and available fields.
+        
+        Args:
+            logs: DataFrame to extract schema from
+            max_samples: Number of sample logs to extract
+        """
+        import json
+        
+        # Extract sample logs
+        self.log_samples = []
+        if '_source.log' in logs.columns:
+            samples = logs['_source.log'].head(max_samples)
+            for log_entry in samples:
+                try:
+                    # Extract JSON part
+                    json_start = log_entry.find('{')
+                    if json_start != -1:
+                        json_str = log_entry[json_start:].replace('""', '"')
+                        log_json = json.loads(json_str)
+                        # Store formatted JSON for readability
+                        self.log_samples.append(json.dumps(log_json, indent=2))
+                except (json.JSONDecodeError, TypeError, AttributeError):
+                    continue
+        
+        # Extract available fields from samples
+        self.available_fields = []
+        if self.log_samples:
+            try:
+                # Get fields from first sample
+                first_sample = json.loads(self.log_samples[0])
+                self.available_fields = list(first_sample.keys())
+            except:
+                pass
+        
+        logger.debug(f"Extracted schema: {len(self.log_samples)} samples, {len(self.available_fields)} fields")
     
     def update_last_result(self, result: Any) -> None:
         """
@@ -330,6 +375,22 @@ class ReActState:
         """
         self.last_result = result
         logger.debug(f"Updated last_result: {type(result).__name__} ({len(result) if hasattr(result, '__len__') else 'N/A'})")
+    
+    def mark_field_extracted(self, field_name: str, value_count: int, is_unique: bool = False) -> None:
+        """
+        Mark a field as extracted from logs.
+        
+        Args:
+            field_name: Name of the field extracted
+            value_count: Number of values extracted
+            is_unique: Whether values have been deduplicated
+        """
+        self.extracted_fields[field_name] = {
+            "count": value_count,
+            "unique": is_unique,
+            "stored_in": "last_result"
+        }
+        logger.debug(f"Marked field '{field_name}' as extracted ({value_count} values, unique={is_unique})")
     
     def update_entities(self, entities: Dict[str, List[Any]]) -> None:
         """

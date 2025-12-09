@@ -437,7 +437,8 @@ class IterativeReactOrchestrator:
                 error=error_msg
             )
         
-        # Auto-inject logs if tool needs them
+        # Auto-inject logs if tool needs them (or has optional logs parameter)
+        has_logs_param = any(p.name == "logs" for p in tool.parameters)
         if hasattr(tool, 'requires_logs') and tool.requires_logs:
             if state.current_logs is not None:
                 if self.verbose:
@@ -446,6 +447,12 @@ class IterativeReactOrchestrator:
             else:
                 if self.verbose:
                     logger.warning(f"  Tool requires logs but none are loaded")
+        elif has_logs_param and "logs" not in params:
+            # Auto-inject logs for optional logs parameter (for auto-parsing support)
+            if state.current_logs is not None:
+                if self.verbose:
+                    logger.debug(f"  Auto-injecting logs (optional): {len(state.current_logs)} rows")
+                params["logs"] = state.current_logs
         
         # Auto-inject last_result if tool needs "values" parameter and it's not provided
         has_values_param = any(p.name == "values" for p in tool.parameters)
@@ -527,6 +534,25 @@ class IterativeReactOrchestrator:
                 if self.verbose:
                     logger.debug(f"  Storing last_result: {type(result.data).__name__}")
                 state.update_last_result(result.data)
+                
+                # Track field extraction
+                if tool_name == "parse_json_field" and isinstance(result.data, list):
+                    field_name = params.get("field_name", "unknown")
+                    state.mark_field_extracted(field_name, len(result.data), is_unique=False)
+                elif tool_name == "extract_unique" and isinstance(result.data, list):
+                    # Mark as unique - try to infer field name from previous tool
+                    if state.tool_history and len(state.tool_history) > 1:
+                        prev_tool = state.tool_history[-2]
+                        if prev_tool.tool_name == "parse_json_field":
+                            field_name = prev_tool.parameters.get("field_name", "unknown")
+                            state.mark_field_extracted(field_name, len(result.data), is_unique=True)
+                elif tool_name == "count_values" and isinstance(result.data, int):
+                    # Mark count as unique
+                    if state.tool_history and len(state.tool_history) > 1:
+                        prev_tool = state.tool_history[-2]
+                        if prev_tool.tool_name == "parse_json_field":
+                            field_name = prev_tool.parameters.get("field_name", "unknown")
+                            state.mark_field_extracted(field_name, result.data, is_unique=True)
     
     def _fallback_answer(self, state: ReActState, reason: str) -> str:
         """

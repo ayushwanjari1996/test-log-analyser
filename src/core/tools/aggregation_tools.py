@@ -159,7 +159,7 @@ class CountUniquePerGroupTool(Tool):
                 top_str = ", ".join(f"{k}:{v}" for k, v in list(top_groups.items())[:display_limit])
                 top_str += f" (and {len(top_groups)-display_limit} more)"
             
-            msg = f"Counted unique '{count_field}' per '{group_by}': {total_groups} groups, {total_items} total unique values. Results: {top_str}"
+            msg = f"[FINAL AGGREGATION] Counted unique '{count_field}' per '{group_by}': {total_groups} groups, {total_items} total unique values. Results: {top_str}"
             
             return ToolResult(
                 success=True,
@@ -170,7 +170,8 @@ class CountUniquePerGroupTool(Tool):
                     "count_field": count_field,
                     "total_groups": total_groups,
                     "total_unique_values": total_items,
-                    "top_n": top_n
+                    "top_n": top_n,
+                    "data_type": "aggregated"
                 }
             )
             
@@ -330,7 +331,7 @@ class CountViaRelationshipTool(Tool):
                 top_str = ", ".join(f"{k}:{v}" for k, v in list(top_groups.items())[:display_limit])
                 top_str += f" (and {len(top_groups)-display_limit} more)"
             
-            msg = f"Counted '{source_field}' per '{target_field}' via relationship chain: {total_groups} groups, {found_count}/{len(source_values)} values mapped ({coverage_pct:.1f}%). Results: {top_str}"
+            msg = f"[FINAL AGGREGATION] Counted '{source_field}' per '{target_field}' via relationship chain: {total_groups} groups, {found_count}/{len(source_values)} values mapped ({coverage_pct:.1f}%). Results: {top_str}"
             
             return ToolResult(
                 success=True,
@@ -343,7 +344,8 @@ class CountViaRelationshipTool(Tool):
                     "values_mapped": found_count,
                     "values_total": len(source_values),
                     "coverage_percent": coverage_pct,
-                    "max_depth": max_depth
+                    "max_depth": max_depth,
+                    "data_type": "aggregated"
                 }
             )
             

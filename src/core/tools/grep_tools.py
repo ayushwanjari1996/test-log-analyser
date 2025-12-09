@@ -111,8 +111,8 @@ class GrepLogsTool(Tool):
             return ToolResult(
                 success=True,
                 data=results,
-                message=f"Found {count} logs matching '{pattern}'{limit_msg}",
-                metadata={"count": count, "pattern": pattern}
+                message=f"[RAW DATA] Found {count} log entries matching '{pattern}'{limit_msg} - may contain duplicates",
+                metadata={"count": count, "pattern": pattern, "data_type": "raw_logs"}
             )
             
         except Exception as e:
@@ -203,8 +203,8 @@ class ParseJsonFieldTool(Tool):
             return ToolResult(
                 success=True,
                 data=values,
-                message=f"Extracted {len(values)} values for '{field_name}'",
-                metadata={"field": field_name, "count": len(values), "values": values[:5]}
+                message=f"[RAW DATA] Extracted {len(values)} raw values for '{field_name}' - may contain duplicates",
+                metadata={"field": field_name, "count": len(values), "values": values[:5], "data_type": "raw_values"}
             )
             
         except Exception as e:
@@ -231,13 +231,20 @@ class ExtractUniqueValuesTool(Tool):
                     param_type=ParameterType.LIST,
                     description="List of values to deduplicate",
                     required=True
+                ),
+                ToolParameter(
+                    name="logs",
+                    param_type=ParameterType.DATAFRAME,
+                    description="Logs DataFrame (for auto-parsing field names)",
+                    required=False
                 )
             ]
         )
-        self.requires_logs = False
+        self.requires_logs = False  # Optional, not required
     
     def execute(self, **kwargs) -> ToolResult:
         values = kwargs.get("values", [])
+        logs = kwargs.get("logs")
         
         if not values:
             return ToolResult(
@@ -248,6 +255,12 @@ class ExtractUniqueValuesTool(Tool):
             )
         
         try:
+            # Smart auto-parsing: Detect if LLM passed field names instead of values
+            if self._looks_like_field_names(values) and logs is not None:
+                logger.info(f"Auto-parsing detected: {values} appear to be field names, not values")
+                values = self._auto_parse_fields(values, logs)
+                logger.info(f"Auto-parsed {len(values)} values from fields")
+            
             # Get unique values
             unique_vals = list(set(values))
             unique_count = len(unique_vals)
@@ -255,11 +268,12 @@ class ExtractUniqueValuesTool(Tool):
             return ToolResult(
                 success=True,
                 data=unique_vals,
-                message=f"Found {unique_count} unique values (from {len(values)} total)",
+                message=f"[FINAL] {unique_count} UNIQUE values (deduplicated from {len(values)} raw entries)",
                 metadata={
                     "unique_count": unique_count,
                     "total_count": len(values),
-                    "sample": unique_vals[:5]
+                    "sample": unique_vals[:5],
+                    "data_type": "unique_values"
                 }
             )
             
@@ -270,6 +284,69 @@ class ExtractUniqueValuesTool(Tool):
                 data=None,
                 error=f"Extract unique failed: {str(e)}"
             )
+    
+    def _looks_like_field_names(self, values: list) -> bool:
+        """
+        Detect if values list contains field names instead of actual data.
+        
+        Field names are typically:
+        - Short list (1-3 items)
+        - PascalCase strings
+        - No special characters like MAC addresses or IPs
+        """
+        if not isinstance(values, list) or len(values) > 5:
+            return False
+        
+        for v in values:
+            if not isinstance(v, str):
+                return False
+            # Check if it looks like a field name (has uppercase, no special chars)
+            if any(c.isupper() for c in v) and ':' not in v and '.' not in v:
+                continue
+            else:
+                return False
+        
+        return True
+    
+    def _auto_parse_fields(self, field_names: list, logs) -> list:
+        """
+        Auto-parse field names from logs.
+        
+        Args:
+            field_names: List of field names to parse
+            logs: DataFrame containing logs
+            
+        Returns:
+            List of extracted values
+        """
+        import json
+        import pandas as pd
+        
+        if not isinstance(logs, pd.DataFrame) or logs.empty:
+            return field_names  # Can't parse, return as-is
+        
+        all_values = []
+        
+        for field_name in field_names:
+            # Parse from _source.log column
+            if '_source.log' in logs.columns:
+                for log_entry in logs['_source.log']:
+                    try:
+                        # Extract JSON part
+                        json_start = log_entry.find('{')
+                        if json_start == -1:
+                            continue
+                        json_str = log_entry[json_start:].replace('""', '"')
+                        log_json = json.loads(json_str)
+                        
+                        # Case-insensitive field lookup
+                        value = case_insensitive_get(log_json, field_name)
+                        if value:
+                            all_values.append(value)
+                    except (json.JSONDecodeError, TypeError, AttributeError):
+                        continue
+        
+        return all_values if all_values else field_names
 
 
 class CountValuesTool(Tool):
@@ -287,13 +364,20 @@ class CountValuesTool(Tool):
                     param_type=ParameterType.LIST,
                     description="List of values to count",
                     required=True
+                ),
+                ToolParameter(
+                    name="logs",
+                    param_type=ParameterType.DATAFRAME,
+                    description="Logs DataFrame (for auto-parsing field names)",
+                    required=False
                 )
             ]
         )
-        self.requires_logs = False
+        self.requires_logs = False  # Optional, not required
     
     def execute(self, **kwargs) -> ToolResult:
         values = kwargs.get("values", [])
+        logs = kwargs.get("logs")
         
         if not values:
             return ToolResult(
@@ -304,16 +388,23 @@ class CountValuesTool(Tool):
             )
         
         try:
+            # Smart auto-parsing: Detect if LLM passed field names instead of values
+            if self._looks_like_field_names(values) and logs is not None:
+                logger.info(f"Auto-parsing detected: {values} appear to be field names, not values")
+                values = self._auto_parse_fields(values, logs)
+                logger.info(f"Auto-parsed {len(values)} values from fields")
+            
             unique_count = len(set(values))
             total_count = len(values)
             
             return ToolResult(
                 success=True,
                 data=unique_count,
-                message=f"{unique_count} unique values (from {total_count} total)",
+                message=f"[FINAL COUNT] {unique_count} unique values (from {total_count} total entries)",
                 metadata={
                     "unique_count": unique_count,
-                    "total_count": total_count
+                    "total_count": total_count,
+                    "data_type": "final_count"
                 }
             )
             
@@ -324,6 +415,69 @@ class CountValuesTool(Tool):
                 data=None,
                 error=f"Count failed: {str(e)}"
             )
+    
+    def _looks_like_field_names(self, values: list) -> bool:
+        """
+        Detect if values list contains field names instead of actual data.
+        
+        Field names are typically:
+        - Short list (1-3 items)
+        - PascalCase strings
+        - No special characters like MAC addresses or IPs
+        """
+        if not isinstance(values, list) or len(values) > 5:
+            return False
+        
+        for v in values:
+            if not isinstance(v, str):
+                return False
+            # Check if it looks like a field name (has uppercase, no special chars)
+            if any(c.isupper() for c in v) and ':' not in v and '.' not in v:
+                continue
+            else:
+                return False
+        
+        return True
+    
+    def _auto_parse_fields(self, field_names: list, logs) -> list:
+        """
+        Auto-parse field names from logs.
+        
+        Args:
+            field_names: List of field names to parse
+            logs: DataFrame containing logs
+            
+        Returns:
+            List of extracted values
+        """
+        import json
+        import pandas as pd
+        
+        if not isinstance(logs, pd.DataFrame) or logs.empty:
+            return field_names  # Can't parse, return as-is
+        
+        all_values = []
+        
+        for field_name in field_names:
+            # Parse from _source.log column
+            if '_source.log' in logs.columns:
+                for log_entry in logs['_source.log']:
+                    try:
+                        # Extract JSON part
+                        json_start = log_entry.find('{')
+                        if json_start == -1:
+                            continue
+                        json_str = log_entry[json_start:].replace('""', '"')
+                        log_json = json.loads(json_str)
+                        
+                        # Case-insensitive field lookup
+                        value = case_insensitive_get(log_json, field_name)
+                        if value:
+                            all_values.append(value)
+                    except (json.JSONDecodeError, TypeError, AttributeError):
+                        continue
+        
+        return all_values if all_values else field_names
 
 
 class GrepAndParseTool(Tool):
@@ -417,15 +571,19 @@ class GrepAndParseTool(Tool):
                     metadata={"pattern": pattern, "field": field_name, "count": 0}
                 )
             
+            data_type_label = "[FINAL]" if unique_only else "[RAW DATA]"
+            value_type = "UNIQUE" if unique_only else "raw"
+            
             return ToolResult(
                 success=True,
                 data=values,
-                message=f"Found {len(values)} values for '{field_name}' in logs matching '{pattern}'",
+                message=f"{data_type_label} Found {len(values)} {value_type} values for '{field_name}' in logs matching '{pattern}'",
                 metadata={
                     "pattern": pattern,
                     "field": field_name,
                     "count": len(values),
-                    "sample": values[:5]
+                    "sample": values[:5],
+                    "data_type": "unique_values" if unique_only else "raw_values"
                 }
             )
             
