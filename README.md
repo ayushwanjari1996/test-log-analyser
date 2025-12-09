@@ -1,3 +1,5 @@
+NOTE: still under development. **Some features might not work.**
+
 AI log QnA + analyser using locally deployed llm.
 
 Step 1) install ollama cli
@@ -6,3 +8,337 @@ Step 3) Get a test file (something like test.csv) and start chat by doing chat.p
 
 
 For personal/new logs, you might need to update entity_mappings.yaml
+
+
+Sample run below:
+
+```text
+PS C:\Users\AYUSH\work\ai-stuff\test-AI-log-engine> python chat.py
+
+Initializing orchestrator...
+[12/09/25 19:07:23] INFO     Initializing IterativeReactOrchestrator
+                    INFO       Log file: test.csv
+                    INFO       Model: qwen3-react
+                    INFO       Max iterations: 10
+                    INFO     Initialized OllamaClient (base_url=http://localhost:11434, model=qwen3-react)
+                    INFO     LLM client initialized: qwen3-react
+                    INFO     StreamSearcher initialized for test.csv
+                    INFO     StreamSearcher initialized for test.csv
+                    INFO     StreamSearcher initialized for test.csv
+                    INFO     Initialized OllamaClient (base_url=http://localhost:11434, model=qwen3-loganalyzer)
+                    INFO     Registered 15 tools
+                    INFO     IterativeReactOrchestrator ready with SmartSummarizer
+✓ Orchestrator initialized
+
+╭──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╮
+│ ┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓ │
+│ ┃                                      🤖 AI Log Analyzer - Interactive Chat                                       ┃ │
+│ ┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛ │
+│                                                                                                                      │
+│ Orchestrator: Iterative ReAct Log File: test.csv Max Iterations: 10                                                  │
+│                                                                                                                      │
+│                                                                                                                      │
+│                                                      Commands:                                                       │
+│                                                                                                                      │
+│  • Type your question naturally (e.g., "count all error logs")                                                       │
+│  • /help - Show this help                                                                                            │
+│  • /history - View chat history                                                                                      │
+│  • /stats - Show session statistics                                                                                  │
+│  • /clear - Clear screen                                                                                             │
+│  • /exit or /quit - Exit chat                                                                                        │
+│                                                                                                                      │
+│                                                                                                                      │
+│                                                   Example Queries:                                                   │
+│                                                                                                                      │
+│  • "count all logs"                                                                                                  │
+│  • "show error logs"                                                                                                 │
+│  • "count unique CM MACs"                                                                                            │
+│  • "find logs for MAWED07T01"                                                                                        │
+│  • "list all RPDs in warning logs"                                                                                   │
+│                                                                                                                      │
+│ Ready to analyze! 🚀                                                                                                 │
+╰──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
+
+You: count unique CM MACs
+Thinking...
+
+======================================================================
+PROCESSING QUERY: count unique CM MACs
+======================================================================
+
+Starting iterative analysis (max 10 iterations)...
+
+======================================================================
+ITERATION 1/10
+Query: count unique CM MACs
+======================================================================
+[12/09/25 19:07:49] INFO     Generation successful: 507 chars, took 12.10s
+
+======================================================================
+[FULL PROMPT TO LLM]
+======================================================================
+You are analyzing logs to answer a query. Decide the NEXT action.
+
+QUERY: count unique CM MACs
+ITERATION: 1/10
+
+PREVIOUS ACTIONS: None (first iteration)
+
+CURRENT STATE:
+  No logs loaded yet
+DECISION POINT:
+- Have enough data? → finalize_answer
+- Need more data? → call next tool
+
+FORMAT (KEEP BRIEF):
+<think>1-2 sentence max</think>
+{
+  "reasoning": "one sentence",
+  "action": "tool_name",
+  "params": {dict}
+}
+
+CRITICAL:
+- Return JSON ONLY
+
+
+======================================================================
+[FULL LLM RESPONSE]
+======================================================================
+<think>Okay, the user wants to count unique CM MACs. First, I need to get the logs that contain CM MAC addresses. Since there are no logs loaded yet, the first step is to search for logs with the pattern "CmMacAddress". This will retrieve all relevant logs. Once I have those logs, I can proceed to count the unique values. So the next action is to use grep_logs with the pattern "CmMacAddress".
+</think>
+
+{"reasoning": "Find logs with CM MACs", "action": "grep_logs", "params": {"pattern": "CmMacAddress"}}
+======================================================================
+
+[Parsed Decision]
+  Action: grep_logs
+  Params: {'pattern': 'CmMacAddress'}
+                    INFO     Streaming search for: 'CmMacAddress' (case_sensitive=False, regex=False)
+                    INFO     Found 101 matches out of 200 lines scanned
+
+[Tool Result]
+  ✓ [RAW DATA] Found 101 log entries matching 'CmMacAddress' - may contain duplicates
+
+======================================================================
+ITERATION 2/10
+Query: count unique CM MACs
+======================================================================
+[12/09/25 19:07:53] INFO     Generation successful: 127 chars, took 2.03s
+
+======================================================================
+[FULL PROMPT TO LLM]
+======================================================================
+You are analyzing logs to answer a query. Decide the NEXT action.
+
+QUERY: count unique CM MACs
+ITERATION: 2/10
+
+PREVIOUS ACTIONS:
+  Step 1: grep_logs({'pattern': 'CmMacAddress'})
+    → [RAW DATA] Found 101 log entries matching 'CmMacAddress' - may contain duplicates
+
+CURRENT STATE:
+  Logs loaded: 101 entries (DataFrame)
+
+  💡 HINT: Query needs unique values. Logs loaded but no fields extracted yet. Use parse_json_field to extract the field you need.
+DECISION POINT:
+- Have enough data? → finalize_answer
+- Need more data? → call next tool
+
+FORMAT (KEEP BRIEF):
+<think>1-2 sentence max</think>
+{
+  "reasoning": "one sentence",
+  "action": "tool_name",
+  "params": {dict}
+}
+
+CRITICAL:
+- Return JSON ONLY
+
+
+======================================================================
+[FULL LLM RESPONSE]
+======================================================================
+<think>
+</think>
+
+{"reasoning": "Extract CM MAC field", "action": "parse_json_field", "params": {"field_name": "CmMacAddress"}}
+======================================================================
+
+[Parsed Decision]
+  Action: parse_json_field
+  Params: {'field_name': 'CmMacAddress'}
+
+[Tool Result]
+  ✓ [RAW DATA] Extracted 47 raw values for 'CmMacAddress' - may contain duplicates
+
+======================================================================
+ITERATION 3/10
+Query: count unique CM MACs
+======================================================================
+[12/09/25 19:08:00] INFO     Generation successful: 168 chars, took 4.26s
+
+======================================================================
+[FULL PROMPT TO LLM]
+======================================================================
+You are analyzing logs to answer a query. Decide the NEXT action.
+
+QUERY: count unique CM MACs
+ITERATION: 3/10
+
+PREVIOUS ACTIONS:
+  Step 1: grep_logs({'pattern': 'CmMacAddress'})
+    → [RAW DATA] Found 101 log entries matching 'CmMacAddress' - may contain duplicates
+  Step 2: parse_json_field({'field_name': 'CmMacAddress', 'logs':                           _index  ... _source.container_name_key
+0    logstash-2025-11-05-[12-16]  ...                      mulpi
+1    logstash-2025-11-05-[12-16]  ...                      mulpi
+2    logstash-2025-11-05-[12-16]  ...                      mulpi
+3    logstash-2025-11-05-[12-16]  ...                      mulpi
+4    logstash-2025-11-05-[12-16]  ...                      mulpi
+..                           ...  ...                        ...
+96   logstash-2025-11-05-[12-16]  ...                      mulpi
+97   logstash-2025-11-05-[12-16]  ...                      mulpi
+98   logstash-2025-11-05-[12-16]  ...                      mulpi
+99   logstash-2025-11-05-[12-16]  ...                      mulpi
+100  logstash-2025-11-05-[12-16]  ...                      mulpi
+
+[101 rows x 27 columns]})
+    → [RAW DATA] Extracted 47 raw values for 'CmMacAddress' - may contain duplicates
+
+CURRENT STATE:
+  Logs loaded: 101 entries (DataFrame)
+
+  Extracted fields:
+    - CmMacAddress: 47 raw (may have duplicates) values (in last_result)
+
+  Last result: 47 values (sample: ['b3:f1:7b:9e:92:bc', '3f:b2:1e:4b:fb:3c', 'f7:f9:28:3c:22:45'])
+
+  💡 HINT: Query needs unique count. Raw values extracted but not deduplicated. Next: count_values(values)
+DECISION POINT:
+- Have enough data? → finalize_answer
+- Need more data? → call next tool
+
+FORMAT (KEEP BRIEF):
+<think>1-2 sentence max</think>
+{
+  "reasoning": "one sentence",
+  "action": "tool_name",
+  "params": {dict}
+}
+
+CRITICAL:
+- Return JSON ONLY
+
+
+======================================================================
+[FULL LLM RESPONSE]
+======================================================================
+<think>
+</think>
+
+{"reasoning": "Count unique CM MACs", "action": "count_values", "params": {"values": ["b3:f1:7b:9e:92:bc", "3f:b2:1e:4b:fb:3c", "f7:f9:28:3c:22:45"]}}
+======================================================================
+
+[Parsed Decision]
+  Action: count_values
+  Params: {'values': ['b3:f1:7b:9e:92:bc', '3f:b2:1e:4b:fb:3c', 'f7:f9:28:3c:22:45']}
+
+[Tool Result]
+  ✓ [FINAL COUNT] 3 unique values (from 3 total entries)
+
+======================================================================
+ITERATION 4/10
+Query: count unique CM MACs
+======================================================================
+[12/09/25 19:08:06] INFO     Generation successful: 182 chars, took 4.80s
+
+======================================================================
+[FULL PROMPT TO LLM]
+======================================================================
+You are analyzing logs to answer a query. Decide the NEXT action.
+
+QUERY: count unique CM MACs
+ITERATION: 4/10
+
+PREVIOUS ACTIONS:
+  Step 1: grep_logs({'pattern': 'CmMacAddress'})
+    → [RAW DATA] Found 101 log entries matching 'CmMacAddress' - may contain duplicates
+  Step 2: parse_json_field({'field_name': 'CmMacAddress', 'logs':                           _index  ... _source.container_name_key
+0    logstash-2025-11-05-[12-16]  ...                      mulpi
+1    logstash-2025-11-05-[12-16]  ...                      mulpi
+2    logstash-2025-11-05-[12-16]  ...                      mulpi
+3    logstash-2025-11-05-[12-16]  ...                      mulpi
+4    logstash-2025-11-05-[12-16]  ...                      mulpi
+..                           ...  ...                        ...
+96   logstash-2025-11-05-[12-16]  ...                      mulpi
+97   logstash-2025-11-05-[12-16]  ...                      mulpi
+98   logstash-2025-11-05-[12-16]  ...                      mulpi
+99   logstash-2025-11-05-[12-16]  ...                      mulpi
+100  logstash-2025-11-05-[12-16]  ...                      mulpi
+
+[101 rows x 27 columns]})
+    → [RAW DATA] Extracted 47 raw values for 'CmMacAddress' - may contain duplicates
+  Step 3: count_values({'values': ['b3:f1:7b:9e:92:bc', '3f:b2:1e:4b:fb:3c', 'f7:f9:28:3c:22:45'], 'logs':                           _index  ... _source.container_name_key
+0    logstash-2025-11-05-[12-16]  ...                      mulpi
+1    logstash-2025-11-05-[12-16]  ...                      mulpi
+2    logstash-2025-11-05-[12-16]  ...                      mulpi
+3    logstash-2025-11-05-[12-16]  ...                      mulpi
+4    logstash-2025-11-05-[12-16]  ...                      mulpi
+..                           ...  ...                        ...
+96   logstash-2025-11-05-[12-16]  ...                      mulpi
+97   logstash-2025-11-05-[12-16]  ...                      mulpi
+98   logstash-2025-11-05-[12-16]  ...                      mulpi
+99   logstash-2025-11-05-[12-16]  ...                      mulpi
+100  logstash-2025-11-05-[12-16]  ...                      mulpi
+
+[101 rows x 27 columns]})
+    → [FINAL COUNT] 3 unique values (from 3 total entries)
+
+CURRENT STATE:
+  Logs loaded: 101 entries (DataFrame)
+
+  Extracted fields:
+    - CmMacAddress: 3 UNIQUE values (in last_result)
+DECISION POINT:
+- Have enough data? → finalize_answer
+- Need more data? → call next tool
+
+FORMAT (KEEP BRIEF):
+<think>1-2 sentence max</think>
+{
+  "reasoning": "one sentence",
+  "action": "tool_name",
+  "params": {dict}
+}
+
+CRITICAL:
+- Return JSON ONLY
+
+
+======================================================================
+[FULL LLM RESPONSE]
+======================================================================
+<think>
+</think>
+
+{"reasoning": "Task complete", "action": "finalize_answer", "params": {"answer": "Found 3 unique CM MACs: b3:f1:7b:9e:92:bc, 3f:b2:1e:4b:fb:3c, f7:f9:28:3c:22:45"}}
+======================================================================
+
+[Parsed Decision]
+  Action: finalize_answer
+  Params: {'answer': 'Found 3 unique CM MACs: b3:f1:7b:9e:92:bc, 3f:b2:1e:4b:fb:3c, f7:f9:28:3c:22:45'}
+
+✓ FINAL ANSWER: Found 3 unique CM MACs: b3:f1:7b:9e:92:bc, 3f:b2:1e:4b:fb:3c, f7:f9:28:3c:22:45
+======================================================================
+
+======================================================================
+✓ SUCCESS
+Answer: Found 3 unique CM MACs: b3:f1:7b:9e:92:bc, 3f:b2:1e:4b:fb:3c, f7:f9:28:3c:22:45
+Iterations: 4/10
+======================================================================
+
+Assistant: Found 3 unique CM MACs: b3:f1:7b:9e:92:bc, 3f:b2:1e:4b:fb:3c, f7:f9:28:3c:22:45
+
+```
