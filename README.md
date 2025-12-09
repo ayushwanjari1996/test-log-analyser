@@ -10,6 +10,7 @@ Step 3) Get a test file (something like test.csv) and start chat by doing chat.p
 For personal/new logs, you might need to update entity_mappings.yaml
 
 
+Sample run below:
 
 ```text
 PS C:\Users\AYUSH\work\ai-stuff\test-AI-log-engine> python chat.py
