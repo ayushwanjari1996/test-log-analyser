@@ -1,5 +1,7 @@
 NOTE: still under development. **Some features might not work.**
 
+**Check arch.md for understand code architecture**
+
 AI log QnA + analyser using locally deployed llm.
 
 Step 1) install ollama cli
