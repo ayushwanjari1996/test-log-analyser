@@ -1,116 +1,200 @@
-1. Overview
+# AI Log Analyzer - Architecture
 
-The app analyzes a single, sorted log file (~10k+ lines).
+## Overview (What It Does)
 
-Supports entity lookup, root-cause analysis, flow tracing, and pattern detection.
+This tool helps you ask questions about log files in plain English. Think of it like having a smart assistant who reads through thousands of log lines and answers questions like "how many errors are there?" or "which devices had problems?"
 
-Uses a single hosted Llama 3.2 model via Ollama as the AI brain.
+The system analyzes CSV log files (can be 10,000+ lines) and uses an AI model (Qwen3 or Llama 3.2) running locally through Ollama to understand your questions and figure out how to answer them.
 
-Supports FIND mode (deterministic entity search) and ANALYZE mode (reasoning, correlations, patterns).
+## How It Works (The Simple Version)
 
-All intermediate steps produce structured JSON; final output is human-readable.
+When you ask a question:
 
-2. Components
-A. User Interface
+1. **You talk** → The AI listens to your question
+2. **AI thinks** → "What do I need to find this out?"
+3. **AI picks a tool** → "I'll use this tool to look at the logs"
+4. **Tool runs** → Searches through logs, extracts data, counts things, etc.
+5. **AI looks at results** → "Do I have enough to answer? Or do I need more?"
+6. **Repeat** → AI picks the next tool if needed
+7. **Final answer** → AI gives you the answer in plain English
 
-Accepts natural language queries.
+This process is called **ReAct** (Reasoning + Acting). The AI reasons about what to do, takes an action, sees the result, then reasons again.
 
-Returns structured JSON (for iterative processing) or final human-readable explanations.
+## The Main Parts
 
-B. LLM Layer (Ollama-hosted Llama 3.2)
+### 1. Chat Interface (chat.py)
+This is where you interact with the system. You type questions, and it shows you answers. Simple as that.
 
-Handles both modes:
+### 2. The Orchestrator (The Director)
+This is the main brain that manages everything. It's called `IterativeReactOrchestrator`.
 
-FIND / Tool Mode → JSON output for entity extraction.
+**What it does each round:**
+- **Builds a summary** of what's happened so far (what tools were used, what data we have)
+- **Asks the AI** "based on everything we know, what should we do next?"
+- **Gets AI's decision** in the form: "Use this tool with these settings"
+- **Runs the tool** and gets results
+- **Updates the memory** with new information
+- **Repeats** until the AI says "I have enough information to answer"
 
-ANALYZE / Reasoning Mode → JSON observations, correlations, pattern detection.
+### 3. The AI Model (The Thinker)
+The AI (Qwen3 or Llama 3.2) doesn't directly read your logs. Instead, each round it receives:
+- Your original question
+- A summary of what's been done so far
+- A sample of current data (not all 10,000 lines!)
+- List of available tools it can use
 
-Mode switching is dynamic and controlled by backend.
+The AI thinks through this and returns a JSON response like:
+```
+{
+  "reasoning": "I need to count error logs first",
+  "action": "filter_logs",
+  "params": {"severity": "ERROR"}
+}
+```
 
-C. Backend / Tools
+The AI doesn't hold any memory between rounds - it's **stateless**. All memory is kept by the Orchestrator.
 
-Log Access & Grep Engine
+### 4. Tools (The Workers)
+Tools are like specialized workers that do specific jobs:
+- **filter_logs**: Find logs matching certain criteria (like "severity = ERROR")
+- **parse_json_field**: Pull out specific values from logs (like MAC addresses)
+- **count_values**: Count how many unique values you have
+- **count_unique_per_group**: Count things grouped by category
+- ... and more
 
-Reads CSV logs line-by-line or in chunks.
+**Smart Auto-Injection:**
+When a tool needs log data, the system automatically provides it - the AI doesn't need to specify "give it these logs". The system knows what data each tool needs.
 
-Performs regex or string-based extraction for entities.
+### 5. Context Builder (The Summarizer)
+This prevents overwhelming the AI with too much information. 
 
-Filters large log sets to feed only minimal relevant slices to LLM.
+**The problem:** Log files can have 10,000+ lines. The AI can't read all that each round.
 
-Entity Mapping & Normalization
+**The solution:** The Context Builder creates compact summaries:
+- Shows a few sample logs (just to show structure)
+- Lists what fields are available (like "you have fields: timestamp, severity, mac_address")
+- Shows counts ("you have 1,523 error logs loaded")
+- Tracks what's been extracted ("you already pulled out 45 unique MAC addresses")
 
-Mapping file: converts user terms → normalized entities.
+For huge result sets (>50 rows), the **SmartSummarizer** creates intelligent summaries instead of showing all data.
 
-Normalized schema: defines log keys + relationships for iterative exploration (e.g., CM → MdId → RPD → Package).
+### 6. State Tracker (The Memory)
+The `ReActState` object keeps track of everything across iterations:
+- **Original query**: What you asked
+- **Tool history**: What tools were used and what they found
+- **Current logs**: The working set of logs (filtered DataFrame)
+- **Extracted entities**: Things we've pulled out (like list of MAC addresses)
+- **Last result**: The most recent tool output
 
-Chunking & Filtering
 
-Ensures log slices fit LLM context windows.
+## The Actual Flow (Step by Step)
 
-Optional pre-filtering by severity, module, or entity.
+Let's say you ask: **"How many unique cable modems had errors?"**
 
-Iterative Recursion Controller
+**Round 1:**
+- AI receives: Your question + empty history + "No logs loaded"
+- AI thinks: "First I need to filter logs to just errors"
+- AI decides: `filter_logs(severity="ERROR")`
+- Tool runs: Finds 1,523 error logs
+- Memory updated: "Currently have 1,523 ERROR logs loaded"
 
-Maintains a queue/stack of entities to process.
+**Round 2:**
+- AI receives: Your question + history ("Step 1 loaded 1,523 ERROR logs") + "1,523 logs available with fields: timestamp, severity, mac_address, ..."
+- AI thinks: "Now I need to extract MAC addresses from these logs"
+- AI decides: `parse_json_field(field_name="mac_address")`
+- Tool runs: Extracts 1,845 MAC addresses (some devices appear multiple times)
+- Memory updated: "Have list of 1,845 MAC addresses (may have duplicates)"
 
-Iteratively:
+**Round 3:**
+- AI receives: Your question + history + "Have 1,845 MAC address values"
+- AI thinks: "Need to count unique ones"
+- AI decides: `count_values(values=<auto-injected>)`
+- Tool runs: Counts unique values = 47
+- Memory updated: "Found 47 unique MAC addresses"
 
-Pops an entity from queue
+**Round 4:**
+- AI receives: Your question + full history + "Found 47 unique MAC addresses"
+- AI thinks: "I have the answer now!"
+- AI decides: `finalize_answer(answer="There are 47 unique cable modems that had errors")`
+- System returns your answer
 
-Performs FIND/ANALYZE on minimal relevant logs
+## Key Design Principles
 
-Extracts next_entities → adds them to queue
+1. **AI is the brain, tools are the hands**
+   - AI decides WHAT to do
+   - Tools actually DO it
 
-Stores intermediate JSON results
+2. **Stateless AI + Stateful Engine**
+   - AI gets a fresh summary each round (doesn't remember previous rounds itself)
+   - The Orchestrator remembers everything and provides summaries
+   - This prevents the AI from getting confused or hallucinating
 
-Continues until queue is empty.
+3. **Keep context small**
+   - Never show the AI all 10,000 logs
+   - Always use summaries, samples, and counts
+   - This makes the AI faster and more accurate
 
-3. Data Flow
+4. **Step by step, not all at once**
+   - Don't try to do everything in one shot
+   - Filter → Extract → Count → Answer
+   - Each step builds on the previous one
 
-User query → backend maps entity aliases → normalized log keys.
+5. **Auto-injection of data**
+   - AI doesn't need to know "which logs to use"
+   - System automatically provides the current working set
+   - Reduces mistakes and makes AI's job easier
 
-Backend performs initial FIND → identifies relevant logs.
+6. **Safety limits**
+   - Maximum 10 iterations (configurable)
+   - If AI gets stuck in a loop, system stops and gives best answer available
+   - Tracks consecutive failures
 
-Backend extracts entities → adds next_entities to queue.
+## What Makes This Different from Simple AI Chat?
 
-While queue is not empty:
+Regular AI chat: You ask → AI tries to answer from memory → Done
+- Problem: AI can't actually read your log files, just guesses
 
-Feed minimal relevant logs to LLM with appropriate mode.
+This system: You ask → AI plans steps → Executes tools on real data → Reasons about results → Answers
+- AI actually analyzes your real data, doesn't just guess
+- Works with huge log files that wouldn't fit in AI context window
+- Breaks complex questions into simple steps
 
-LLM outputs JSON: next_entities, observations, mode_suggestion.
+## Configuration Files
 
-Store intermediate JSON results → enqueue new next_entities.
+- **entity_mappings.yaml**: Maps human terms to log field names (e.g., "cable modem" → "mac_address")
+- **log_schema.yaml**: Defines what fields exist and how they relate
+- **prompts.yaml**: System instructions for the AI
+- **react_config.yaml**: Tool definitions and instructions
 
-Once queue is empty → aggregate all JSON → generate human-readable explanation.
+## Tools Available
 
-4. Handling Use Cases
+The AI can choose from 15 tools (organized by category):
 
-Entity lookup: iterative FIND only.
+**Basic Log Operations (5 tools):**
+1. **grep_logs**: Search logs by pattern or criteria (fast, memory-efficient)
+2. **parse_json_field**: Extract values from a specific field in logs
+3. **extract_unique**: Remove duplicates from a list of values
+4. **count_values**: Count unique values in a list
+5. **grep_and_parse**: Combined search + extract in one step (efficient)
 
-Root cause analysis: iterative FIND → ANALYZE loops.
+**Relationship Tools (1 tool):**
+6. **find_relationship_chain**: Discover connections between entities (e.g., CM → RPD → Package)
 
-Flow for CM/modem: FIND logs → extract related entities → ANALYZE timeline/sequence.
+**Aggregation Tools (2 tools):**
+7. **count_unique_per_group**: Count distinct values per category (e.g., errors per device)
+8. **count_via_relationship**: Count through entity relationships (e.g., count CMs per RPD)
 
-Pattern analysis: ANALYZE mode over filtered chunks → iterative exploration.
+**Time-Based Tools (2 tools):**
+9. **sort_by_time**: Sort logs chronologically
+10. **extract_time_range**: Filter logs by time period
 
-Large logs: handled via streaming, chunking, minimal log feeding.
+**Analysis Tools (3 tools):**
+11. **summarize_logs**: Create text summary of log patterns
+12. **aggregate_by_field**: Group and aggregate statistics by field
+13. **analyze_logs**: Deep LLM-based analysis of log patterns
 
-Aliases / inconsistent keys: mapping + normalized schema.
+**Output & Control (2 tools):**
+14. **return_logs**: Show sample logs to user
+15. **finalize_answer**: Return final answer and stop iteration
 
-5. Principles
-
-LLM = brain: interprets queries, reasons, outputs structured JSON.
-
-Backend = hands: deterministic search, mapping, chunking, iterative recursion, aggregation.
-
-Structured JSON first: drives recursion, ensures deterministic processing.
-
-Final human-readable output: aggregates all steps for clarity.
-
-Iterative recursion: safer than true recursion for large logs, avoids stack issues.
-
-6. Optional Enhancements
-
-Vector DB for domain knowledge or abbreviations (improves reasoning).
-
-Summarization or reporting layer for final human-readable output (flow diagrams, pattern tables).
+The AI learns what each tool does and when to use it from the configuration files (react_config.yaml).
