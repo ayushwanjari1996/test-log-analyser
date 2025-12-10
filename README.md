@@ -192,17 +192,17 @@ PREVIOUS ACTIONS:
   Step 1: grep_logs({'pattern': 'CmMacAddress'})
     → [RAW DATA] Found 101 log entries matching 'CmMacAddress' - may contain duplicates
   Step 2: parse_json_field({'field_name': 'CmMacAddress', 'logs':                           _index  ... _source.container_name_key
-0    logstash-2025-11-05-[12-16]  ...                      mulpi
-1    logstash-2025-11-05-[12-16]  ...                      mulpi
-2    logstash-2025-11-05-[12-16]  ...                      mulpi
-3    logstash-2025-11-05-[12-16]  ...                      mulpi
-4    logstash-2025-11-05-[12-16]  ...                      mulpi
+0    logstash-2025-11-05-[12-16]  ...                      testcontainer12
+1    logstash-2025-11-05-[12-16]  ...                      testcontainer12
+2    logstash-2025-11-05-[12-16]  ...                      testcontainer12
+3    logstash-2025-11-05-[12-16]  ...                      testcontainer12
+4    logstash-2025-11-05-[12-16]  ...                      testcontainer12
 ..                           ...  ...                        ...
-96   logstash-2025-11-05-[12-16]  ...                      mulpi
-97   logstash-2025-11-05-[12-16]  ...                      mulpi
-98   logstash-2025-11-05-[12-16]  ...                      mulpi
-99   logstash-2025-11-05-[12-16]  ...                      mulpi
-100  logstash-2025-11-05-[12-16]  ...                      mulpi
+96   logstash-2025-11-05-[12-16]  ...                      testcontainer12
+97   logstash-2025-11-05-[12-16]  ...                      testcontainer12
+98   logstash-2025-11-05-[12-16]  ...                      testcontainer12
+99   logstash-2025-11-05-[12-16]  ...                      testcontainer12
+100  logstash-2025-11-05-[12-16]  ...                      testcontainer12
 
 [101 rows x 27 columns]})
     → [RAW DATA] Extracted 47 raw values for 'CmMacAddress' - may contain duplicates
@@ -266,32 +266,32 @@ PREVIOUS ACTIONS:
   Step 1: grep_logs({'pattern': 'CmMacAddress'})
     → [RAW DATA] Found 101 log entries matching 'CmMacAddress' - may contain duplicates
   Step 2: parse_json_field({'field_name': 'CmMacAddress', 'logs':                           _index  ... _source.container_name_key
-0    logstash-2025-11-05-[12-16]  ...                      mulpi
-1    logstash-2025-11-05-[12-16]  ...                      mulpi
-2    logstash-2025-11-05-[12-16]  ...                      mulpi
-3    logstash-2025-11-05-[12-16]  ...                      mulpi
-4    logstash-2025-11-05-[12-16]  ...                      mulpi
+0    logstash-2025-11-05-[12-16]  ...                      testcontainer12
+1    logstash-2025-11-05-[12-16]  ...                      testcontainer12
+2    logstash-2025-11-05-[12-16]  ...                      testcontainer12
+3    logstash-2025-11-05-[12-16]  ...                      testcontainer12
+4    logstash-2025-11-05-[12-16]  ...                      testcontainer12
 ..                           ...  ...                        ...
-96   logstash-2025-11-05-[12-16]  ...                      mulpi
-97   logstash-2025-11-05-[12-16]  ...                      mulpi
-98   logstash-2025-11-05-[12-16]  ...                      mulpi
-99   logstash-2025-11-05-[12-16]  ...                      mulpi
-100  logstash-2025-11-05-[12-16]  ...                      mulpi
+96   logstash-2025-11-05-[12-16]  ...                      testcontainer12
+97   logstash-2025-11-05-[12-16]  ...                      testcontainer12
+98   logstash-2025-11-05-[12-16]  ...                      testcontainer12
+99   logstash-2025-11-05-[12-16]  ...                      testcontainer12
+100  logstash-2025-11-05-[12-16]  ...                      testcontainer12
 
 [101 rows x 27 columns]})
     → [RAW DATA] Extracted 47 raw values for 'CmMacAddress' - may contain duplicates
   Step 3: count_values({'values': ['b3:f1:7b:9e:92:bc', '3f:b2:1e:4b:fb:3c', 'f7:f9:28:3c:22:45'], 'logs':                           _index  ... _source.container_name_key
-0    logstash-2025-11-05-[12-16]  ...                      mulpi
-1    logstash-2025-11-05-[12-16]  ...                      mulpi
-2    logstash-2025-11-05-[12-16]  ...                      mulpi
-3    logstash-2025-11-05-[12-16]  ...                      mulpi
-4    logstash-2025-11-05-[12-16]  ...                      mulpi
+0    logstash-2025-11-05-[12-16]  ...                      testcontainer12
+1    logstash-2025-11-05-[12-16]  ...                      testcontainer12
+2    logstash-2025-11-05-[12-16]  ...                      testcontainer12
+3    logstash-2025-11-05-[12-16]  ...                      testcontainer12
+4    logstash-2025-11-05-[12-16]  ...                      testcontainer12
 ..                           ...  ...                        ...
-96   logstash-2025-11-05-[12-16]  ...                      mulpi
-97   logstash-2025-11-05-[12-16]  ...                      mulpi
-98   logstash-2025-11-05-[12-16]  ...                      mulpi
-99   logstash-2025-11-05-[12-16]  ...                      mulpi
-100  logstash-2025-11-05-[12-16]  ...                      mulpi
+96   logstash-2025-11-05-[12-16]  ...                      testcontainer12
+97   logstash-2025-11-05-[12-16]  ...                      testcontainer12
+98   logstash-2025-11-05-[12-16]  ...                      testcontainer12
+99   logstash-2025-11-05-[12-16]  ...                      testcontainer12
+100  logstash-2025-11-05-[12-16]  ...                      testcontainer12
 
 [101 rows x 27 columns]})
     → [FINAL COUNT] 3 unique values (from 3 total entries)
