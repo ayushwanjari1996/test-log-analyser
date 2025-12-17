@@ -18,7 +18,7 @@ Sample run below:
 PS C:\Users\AYUSH\work\ai-stuff\test-AI-log-engine> python chat.py
 
 Initializing orchestrator...
-[12/09/25 19:07:23] INFO     Initializing IterativeReactOrchestrator
+[12/17/25 19:12:53] INFO     Initializing IterativeReactOrchestrator
                     INFO       Log file: test.csv
                     INFO       Model: qwen3-react
                     INFO       Max iterations: 10
@@ -74,7 +74,7 @@ Starting iterative analysis (max 10 iterations)...
 ITERATION 1/10
 Query: count unique CM MACs
 ======================================================================
-[12/09/25 19:07:49] INFO     Generation successful: 507 chars, took 12.10s
+[12/17/25 19:13:44] INFO     Generation successful: 515 chars, took 21.72s
 
 ======================================================================
 [FULL PROMPT TO LLM]
@@ -110,7 +110,7 @@ CRITICAL:
 <think>Okay, the user wants to count unique CM MACs. First, I need to get the logs that contain CM MAC addresses. Since there are no logs loaded yet, the first step is to search for logs with the pattern "CmMacAddress". This will retrieve all relevant logs. Once I have those logs, I can proceed to count the unique values. So the next action is to use grep_logs with the pattern "CmMacAddress".
 </think>
 
-{"reasoning": "Find logs with CM MACs", "action": "grep_logs", "params": {"pattern": "CmMacAddress"}}
+{"reasoning": "Need to find logs with CM MACs", "action": "grep_logs", "params": {"pattern": "CmMacAddress"}}
 ======================================================================
 
 [Parsed Decision]
@@ -126,7 +126,7 @@ CRITICAL:
 ITERATION 2/10
 Query: count unique CM MACs
 ======================================================================
-[12/09/25 19:07:53] INFO     Generation successful: 127 chars, took 2.03s
+[12/17/25 19:13:48] INFO     Generation successful: 133 chars, took 2.12s
 
 ======================================================================
 [FULL PROMPT TO LLM]
@@ -166,7 +166,7 @@ CRITICAL:
 <think>
 </think>
 
-{"reasoning": "Extract CM MAC field", "action": "parse_json_field", "params": {"field_name": "CmMacAddress"}}
+{"reasoning": "Extract CmMacAddress field", "action": "parse_json_field", "params": {"field_name": "CmMacAddress"}}
 ======================================================================
 
 [Parsed Decision]
@@ -180,7 +180,7 @@ CRITICAL:
 ITERATION 3/10
 Query: count unique CM MACs
 ======================================================================
-[12/09/25 19:08:00] INFO     Generation successful: 168 chars, took 4.26s
+[12/17/25 19:13:52] INFO     Generation successful: 133 chars, took 2.27s
 
 ======================================================================
 [FULL PROMPT TO LLM]
@@ -194,17 +194,17 @@ PREVIOUS ACTIONS:
   Step 1: grep_logs({'pattern': 'CmMacAddress'})
     → [RAW DATA] Found 101 log entries matching 'CmMacAddress' - may contain duplicates
   Step 2: parse_json_field({'field_name': 'CmMacAddress', 'logs':                           _index  ... _source.container_name_key
-0    logstash-2025-11-05-[12-16]  ...                      testcontainer12
-1    logstash-2025-11-05-[12-16]  ...                      testcontainer12
-2    logstash-2025-11-05-[12-16]  ...                      testcontainer12
-3    logstash-2025-11-05-[12-16]  ...                      testcontainer12
-4    logstash-2025-11-05-[12-16]  ...                      testcontainer12
+0    logstash-2025-11-05-[12-16]  ...                      mulpi
+1    logstash-2025-11-05-[12-16]  ...                      mulpi
+2    logstash-2025-11-05-[12-16]  ...                      mulpi
+3    logstash-2025-11-05-[12-16]  ...                      mulpi
+4    logstash-2025-11-05-[12-16]  ...                      mulpi
 ..                           ...  ...                        ...
-96   logstash-2025-11-05-[12-16]  ...                      testcontainer12
-97   logstash-2025-11-05-[12-16]  ...                      testcontainer12
-98   logstash-2025-11-05-[12-16]  ...                      testcontainer12
-99   logstash-2025-11-05-[12-16]  ...                      testcontainer12
-100  logstash-2025-11-05-[12-16]  ...                      testcontainer12
+96   logstash-2025-11-05-[12-16]  ...                      mulpi
+97   logstash-2025-11-05-[12-16]  ...                      mulpi
+98   logstash-2025-11-05-[12-16]  ...                      mulpi
+99   logstash-2025-11-05-[12-16]  ...                      mulpi
+100  logstash-2025-11-05-[12-16]  ...                      mulpi
 
 [101 rows x 27 columns]})
     → [RAW DATA] Extracted 47 raw values for 'CmMacAddress' - may contain duplicates
@@ -217,7 +217,7 @@ CURRENT STATE:
 
   Last result: 47 values (sample: ['b3:f1:7b:9e:92:bc', '3f:b2:1e:4b:fb:3c', 'f7:f9:28:3c:22:45'])
 
-  💡 HINT: Query needs unique count. Raw values extracted but not deduplicated. Next: count_values(values)
+  💡 HINT: Query needs unique count. Raw values extracted but not deduplicated. Next: count_values() - values will be auto-used from last_result
 DECISION POINT:
 - Have enough data? → finalize_answer
 - Need more data? → call next tool
@@ -240,21 +240,22 @@ CRITICAL:
 <think>
 </think>
 
-{"reasoning": "Count unique CM MACs", "action": "count_values", "params": {"values": ["b3:f1:7b:9e:92:bc", "3f:b2:1e:4b:fb:3c", "f7:f9:28:3c:22:45"]}}
+{"reasoning": "Count unique CM MACs from extracted values", "action": "count_values", "params": {"values": [".*"]}}
 ======================================================================
 
 [Parsed Decision]
   Action: count_values
-  Params: {'values': ['b3:f1:7b:9e:92:bc', '3f:b2:1e:4b:fb:3c', 'f7:f9:28:3c:22:45']}
+  Params: {'values': ['.*']}
+                    INFO       🔧 Detected sample values (1 items), replacing with full dataset (47 items)
 
 [Tool Result]
-  ✓ [FINAL COUNT] 3 unique values (from 3 total entries)
+  ✓ [FINAL COUNT] 47 unique values (from 47 total entries)
 
 ======================================================================
 ITERATION 4/10
 Query: count unique CM MACs
 ======================================================================
-[12/09/25 19:08:06] INFO     Generation successful: 182 chars, took 4.80s
+[12/17/25 19:13:58] INFO     Generation successful: 156 chars, took 3.69s
 
 ======================================================================
 [FULL PROMPT TO LLM]
@@ -268,41 +269,41 @@ PREVIOUS ACTIONS:
   Step 1: grep_logs({'pattern': 'CmMacAddress'})
     → [RAW DATA] Found 101 log entries matching 'CmMacAddress' - may contain duplicates
   Step 2: parse_json_field({'field_name': 'CmMacAddress', 'logs':                           _index  ... _source.container_name_key
-0    logstash-2025-11-05-[12-16]  ...                      testcontainer12
-1    logstash-2025-11-05-[12-16]  ...                      testcontainer12
-2    logstash-2025-11-05-[12-16]  ...                      testcontainer12
-3    logstash-2025-11-05-[12-16]  ...                      testcontainer12
-4    logstash-2025-11-05-[12-16]  ...                      testcontainer12
+0    logstash-2025-11-05-[12-16]  ...                      mulpi
+1    logstash-2025-11-05-[12-16]  ...                      mulpi
+2    logstash-2025-11-05-[12-16]  ...                      mulpi
+3    logstash-2025-11-05-[12-16]  ...                      mulpi
+4    logstash-2025-11-05-[12-16]  ...                      mulpi
 ..                           ...  ...                        ...
-96   logstash-2025-11-05-[12-16]  ...                      testcontainer12
-97   logstash-2025-11-05-[12-16]  ...                      testcontainer12
-98   logstash-2025-11-05-[12-16]  ...                      testcontainer12
-99   logstash-2025-11-05-[12-16]  ...                      testcontainer12
-100  logstash-2025-11-05-[12-16]  ...                      testcontainer12
+96   logstash-2025-11-05-[12-16]  ...                      mulpi
+97   logstash-2025-11-05-[12-16]  ...                      mulpi
+98   logstash-2025-11-05-[12-16]  ...                      mulpi
+99   logstash-2025-11-05-[12-16]  ...                      mulpi
+100  logstash-2025-11-05-[12-16]  ...                      mulpi
 
 [101 rows x 27 columns]})
     → [RAW DATA] Extracted 47 raw values for 'CmMacAddress' - may contain duplicates
-  Step 3: count_values({'values': ['b3:f1:7b:9e:92:bc', '3f:b2:1e:4b:fb:3c', 'f7:f9:28:3c:22:45'], 'logs':                           _index  ... _source.container_name_key
-0    logstash-2025-11-05-[12-16]  ...                      testcontainer12
-1    logstash-2025-11-05-[12-16]  ...                      testcontainer12
-2    logstash-2025-11-05-[12-16]  ...                      testcontainer12
-3    logstash-2025-11-05-[12-16]  ...                      testcontainer12
-4    logstash-2025-11-05-[12-16]  ...                      testcontainer12
+  Step 3: count_values({'values': ['b3:f1:7b:9e:92:bc', '3f:b2:1e:4b:fb:3c', 'f7:f9:28:3c:22:45', '34:30:ed:0b:c5:31', '4b:df:5d:f3:71:89', '54:e9:c9:61:fe:84', '81:03:a5:a8:4a:46', '2d:a7:26:aa:fb:65', '59:1f:3c:f2:a6:8b', '6b:d1:14:26:17:68', '8d:b9:1a:44:3b:d9', '1d:7e:bd:cb:fa:6b', 'a3:aa:09:9d:17:28', '94:af:68:3b:69:40', '22:3e:6c:ac:af:97', 'ae:87:f4:94:8b:cc', '8b:4a:06:38:09:8f', 'd3:78:6d:83:14:2d', '21:21:c4:2e:3a:f1', 'c1:c3:b8:c5:1d:2b', '4a:c4:db:9a:2a:2e', '8d:44:23:94:88:19', '6c:8e:b0:01:02:1e', '9c:91:5a:43:dc:b3', 'b8:92:68:03:90:63', '7c:fd:8c:90:6e:26', '5a:4a:21:3c:de:5d', '66:42:bf:cf:10:ff', 'a7:f9:a1:c2:88:70', '21:45:7b:4f:b7:5d', '9d:fc:04:d0:22:c4', 'eb:84:2e:de:49:5b', '5c:b9:8c:88:d2:13', 'b1:8a:9e:02:15:e3', 'e3:49:e3:a0:c3:45', 'de:25:f1:17:ae:ca', 'bf:d3:79:d9:0b:b6', '3f:d4:f1:5c:15:52', '15:de:c0:05:c9:74', 'be:ef:26:3b:66:05', '47:5c:57:0b:f4:55', '08:8d:d3:14:b9:9e', '4d:8c:d8:58:6c:75', 'd0:99:28:47:b1:17', '5f:fc:3f:6c:2e:ef', '46:f6:e1:d3:2e:b5', 'a5:1b:61:fe:ed:e7'], 'logs':                           _index  ... _source.container_name_key
+0    logstash-2025-11-05-[12-16]  ...                      mulpi
+1    logstash-2025-11-05-[12-16]  ...                      mulpi
+2    logstash-2025-11-05-[12-16]  ...                      mulpi
+3    logstash-2025-11-05-[12-16]  ...                      mulpi
+4    logstash-2025-11-05-[12-16]  ...                      mulpi
 ..                           ...  ...                        ...
-96   logstash-2025-11-05-[12-16]  ...                      testcontainer12
-97   logstash-2025-11-05-[12-16]  ...                      testcontainer12
-98   logstash-2025-11-05-[12-16]  ...                      testcontainer12
-99   logstash-2025-11-05-[12-16]  ...                      testcontainer12
-100  logstash-2025-11-05-[12-16]  ...                      testcontainer12
+96   logstash-2025-11-05-[12-16]  ...                      mulpi
+97   logstash-2025-11-05-[12-16]  ...                      mulpi
+98   logstash-2025-11-05-[12-16]  ...                      mulpi
+99   logstash-2025-11-05-[12-16]  ...                      mulpi
+100  logstash-2025-11-05-[12-16]  ...                      mulpi
 
 [101 rows x 27 columns]})
-    → [FINAL COUNT] 3 unique values (from 3 total entries)
+    → [FINAL COUNT] 47 unique values (from 47 total entries)
 
 CURRENT STATE:
   Logs loaded: 101 entries (DataFrame)
 
   Extracted fields:
-    - CmMacAddress: 3 UNIQUE values (in last_result)
+    - CmMacAddress: 47 UNIQUE values (in last_result)
 DECISION POINT:
 - Have enough data? → finalize_answer
 - Need more data? → call next tool
@@ -325,22 +326,27 @@ CRITICAL:
 <think>
 </think>
 
-{"reasoning": "Task complete", "action": "finalize_answer", "params": {"answer": "Found 3 unique CM MACs: b3:f1:7b:9e:92:bc, 3f:b2:1e:4b:fb:3c, f7:f9:28:3c:22:45"}}
+{
+  "reasoning": "Unique CM MACs counted",
+  "action": "finalize_answer",
+  "params": {"answer": "Found 47 unique CM MACs in the logs."}
+}
 ======================================================================
 
 [Parsed Decision]
   Action: finalize_answer
-  Params: {'answer': 'Found 3 unique CM MACs: b3:f1:7b:9e:92:bc, 3f:b2:1e:4b:fb:3c, f7:f9:28:3c:22:45'}
+  Params: {'answer': 'Found 47 unique CM MACs in the logs.'}
 
-✓ FINAL ANSWER: Found 3 unique CM MACs: b3:f1:7b:9e:92:bc, 3f:b2:1e:4b:fb:3c, f7:f9:28:3c:22:45
+✓ FINAL ANSWER: Found 47 unique CM MACs in the logs.
 ======================================================================
 
 ======================================================================
 ✓ SUCCESS
-Answer: Found 3 unique CM MACs: b3:f1:7b:9e:92:bc, 3f:b2:1e:4b:fb:3c, f7:f9:28:3c:22:45
+Answer: Found 47 unique CM MACs in the logs.
 Iterations: 4/10
 ======================================================================
 
-Assistant: Found 3 unique CM MACs: b3:f1:7b:9e:92:bc, 3f:b2:1e:4b:fb:3c, f7:f9:28:3c:22:45
+Assistant: Found 47 unique CM MACs in the logs.
 
+You:
 ```
