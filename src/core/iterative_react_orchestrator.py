@@ -454,13 +454,25 @@ class IterativeReactOrchestrator:
                     logger.debug(f"  Auto-injecting logs (optional): {len(state.current_logs)} rows")
                 params["logs"] = state.current_logs
         
-        # Auto-inject last_result if tool needs "values" parameter and it's not provided
+        # Auto-inject/replace last_result for "values" parameter
         has_values_param = any(p.name == "values" for p in tool.parameters)
-        if has_values_param and "values" not in params:
-            if state.last_result is not None and isinstance(state.last_result, list):
+        if has_values_param and state.last_result is not None and isinstance(state.last_result, list):
+            # Case 1: values not provided at all - inject full list
+            if "values" not in params:
                 if self.verbose:
                     logger.debug(f"  Auto-injecting values: {len(state.last_result)} items")
                 params["values"] = state.last_result
+            
+            # Case 2: values provided but looks like a sample (LLM copied from prompt sample)
+            # Replace with full list if state has significantly more data
+            elif isinstance(params.get("values"), list):
+                provided_count = len(params["values"])
+                available_count = len(state.last_result)
+                
+                # If provided list is small (<10) and state has much more data (>2x), use state data
+                if provided_count < 10 and available_count > provided_count * 2:
+                    logger.info(f"  🔧 Detected sample values ({provided_count} items), replacing with full dataset ({available_count} items)")
+                    params["values"] = state.last_result
         
         # Execute tool
         try:

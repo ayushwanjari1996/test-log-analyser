@@ -266,7 +266,7 @@ class ContextBuilder:
                 # Check if it's been deduplicated
                 is_unique = any(info.get("unique") for info in state.extracted_fields.values())
                 if not is_unique:
-                    return "Query needs unique count. Raw values extracted but not deduplicated. Next: count_values(values)"
+                    return "Query needs unique count. Raw values extracted but not deduplicated. Next: count_values() - values will be auto-used from last_result"
         
         # Query asks for relationship/connection (e.g., "count X per Y")
         if any(word in query for word in ["per", "for each", "associated", "linked", "by"]):

@@ -1,7 +1,7 @@
 PS C:\Users\AYUSH\work\ai-stuff\test-AI-log-engine> python chat.py
 
 Initializing orchestrator...
-[12/07/25 21:59:18] INFO     Initializing IterativeReactOrchestrator
+[12/09/25 19:07:23] INFO     Initializing IterativeReactOrchestrator
                     INFO       Log file: test.csv
                     INFO       Model: qwen3-react
                     INFO       Max iterations: 10
@@ -44,27 +44,27 @@ Initializing orchestrator...
 │ Ready to analyze! 🚀                                                                                                 │
 ╰──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
 
-You: count total number of cpe devices
+You: count unique CM MACs
 Thinking...
 
 ======================================================================
-PROCESSING QUERY: count total number of cpe devices
+PROCESSING QUERY: count unique CM MACs
 ======================================================================
 
 Starting iterative analysis (max 10 iterations)...
 
 ======================================================================
 ITERATION 1/10
-Query: count total number of cpe devices
+Query: count unique CM MACs
 ======================================================================
-[12/07/25 21:59:32] INFO     Generation successful: 615 chars, took 10.12s
+[12/09/25 19:07:49] INFO     Generation successful: 507 chars, took 12.10s
 
 ======================================================================
 [FULL PROMPT TO LLM]
 ======================================================================
 You are analyzing logs to answer a query. Decide the NEXT action.
 
-QUERY: count total number of cpe devices
+QUERY: count unique CM MACs
 ITERATION: 1/10
 
 PREVIOUS ACTIONS: None (first iteration)
@@ -90,88 +90,43 @@ CRITICAL:
 ======================================================================
 [FULL LLM RESPONSE]
 ======================================================================
-<think>Okay, the user wants to count the total number of CPE devices. First, I need to find all logs that mention CPE devices. The CPE devices are likely identified by their MAC addresses, so I should search for logs containing "CpeMacAddress". Once I have those logs, I can extract the unique MAC addresses to count the distinct devices. Since the user asked for the total number, I need to make sure each MAC is counted once. Let me start by using the grep_logs tool to find all logs with "CpeMacAddress".
+<think>Okay, the user wants to count unique CM MACs. First, I need to get the logs that contain CM MAC addresses. Since there are no logs loaded yet, the first step is to search for logs with the pattern "CmMacAddress". This will retrieve all relevant logs. Once I have those logs, I can proceed to count the unique values. So the next action is to use grep_logs with the pattern "CmMacAddress".
 </think>
 
-{"reasoning": "Find CPE MAC logs", "action": "grep_logs", "params": {"pattern": "CpeMacAddress"}}
+{"reasoning": "Find logs with CM MACs", "action": "grep_logs", "params": {"pattern": "CmMacAddress"}}
 ======================================================================
 
 [Parsed Decision]
   Action: grep_logs
-  Params: {'pattern': 'CpeMacAddress'}
-                    INFO     Streaming search for: 'CpeMacAddress' (case_sensitive=False, regex=False)
-                    INFO     Found 39 matches out of 2115 lines scanned
+  Params: {'pattern': 'CmMacAddress'}
+                    INFO     Streaming search for: 'CmMacAddress' (case_sensitive=False, regex=False)
+                    INFO     Found 101 matches out of 200 lines scanned
 
 [Tool Result]
-  ✓ [RAW DATA] Found 39 log entries matching 'CpeMacAddress' - may contain duplicates
+  ✓ [RAW DATA] Found 101 log entries matching 'CmMacAddress' - may contain duplicates
 
 ======================================================================
 ITERATION 2/10
-Query: count total number of cpe devices
+Query: count unique CM MACs
 ======================================================================
-[12/07/25 21:59:37] INFO     Generation successful: 128 chars, took 2.29s
+[12/09/25 19:07:53] INFO     Generation successful: 127 chars, took 2.03s
 
 ======================================================================
 [FULL PROMPT TO LLM]
 ======================================================================
 You are analyzing logs to answer a query. Decide the NEXT action.
 
-QUERY: count total number of cpe devices
+QUERY: count unique CM MACs
 ITERATION: 2/10
 
 PREVIOUS ACTIONS:
-  Step 1: grep_logs({'pattern': 'CpeMacAddress'})
-    → [RAW DATA] Found 39 log entries matching 'CpeMacAddress' - may contain duplicates
+  Step 1: grep_logs({'pattern': 'CmMacAddress'})
+    → [RAW DATA] Found 101 log entries matching 'CmMacAddress' - may contain duplicates
 
 CURRENT STATE:
-  Logs loaded: 39 entries (DataFrame)
+  Logs loaded: 101 entries (DataFrame)
 
-  Sample log structure (showing 2 of 39):
-    Sample 1:
-    {
-      "Role": "active",
-      "Severity": "DEBUG",
-      "Package": "ulc-mulpi",
-      "Version": "1.48-1011.48",
-      "File": "PerfMgr.cpp:1150",
-      "Logger": "ulcmulpid.PerfMgr",
-      "Function": "ProcEvAddCpe",
-      "Message": "ProcEvAddCpe",
-      "CmMacAddress": "c8:63:fc:15:41:6c",
-      "CpeMacAddress": "c8:63:fc:15:41:6e",
-      "ESafeType": "eRouter",
-      "BundleId": "1",
-      "SubBundleId": "0",
-      "NsiVlanId": "50",
-      "DhcpNsiVlanId": "0"
-    }
-    Sample 2:
-    {
-      "Role": "active",
-      "Severity": "DEBUG",
-      "Package": "ulc-mulpi",
-      "Version": "1.48-1011.48",
-      "File": "PerfMgr.cpp:1150",
-      "Logger": "ulcmulpid.PerfMgr",
-      "Function": "ProcEvAddCpe",
-      "Message": "ProcEvAddCpe",
-      "CmMacAddress": "c8:63:fc:15:41:6c",
-      "CpeMacAddress": "c8:63:fc:15:41:6e",
-      "ESafeType": "eRouter",
-      "BundleId": "1",
-      "SubBundleId": "0",
-      "NsiVlanId": "50",
-      "DhcpNsiVlanId": "0"
-    }
-
-  Available fields (grouped by entity):
-    Package: Package
-    CM: CmMacAddress
-    CPE: CpeMacAddress
-    System/Other: Role, Severity, Version, File, Logger (+7 more)
-  ⚠️ Fields are INSIDE logs - use parse_json_field(logs, 'FieldName') to extract values
-
-  💡 HINT: Query asks for unique CPE values. Available CPE fields: CpeMacAddress. Parse the field that uniquely identifies the entity.
+  💡 HINT: Query needs unique values. Logs loaded but no fields extracted yet. Use parse_json_field to extract the field you need.
 DECISION POINT:
 - Have enough data? → finalize_answer
 - Need more data? → call next tool
@@ -194,87 +149,58 @@ CRITICAL:
 <think>
 </think>
 
-{"reasoning": "Count unique CPE devices", "action": "extract_unique", "params": {"values": ["CpeMacAddress"]}}
+{"reasoning": "Extract CM MAC field", "action": "parse_json_field", "params": {"field_name": "CmMacAddress"}}
 ======================================================================
 
 [Parsed Decision]
-  Action: extract_unique
-  Params: {'values': ['CpeMacAddress']}
+  Action: parse_json_field
+  Params: {'field_name': 'CmMacAddress'}
 
 [Tool Result]
-  ✓ [FINAL] 1 UNIQUE values (deduplicated from 1 raw entries)
+  ✓ [RAW DATA] Extracted 47 raw values for 'CmMacAddress' - may contain duplicates
 
 ======================================================================
 ITERATION 3/10
-Query: count total number of cpe devices
+Query: count unique CM MACs
 ======================================================================
-[12/07/25 21:59:41] INFO     Generation successful: 147 chars, took 2.46s
+[12/09/25 19:08:00] INFO     Generation successful: 168 chars, took 4.26s
 
 ======================================================================
 [FULL PROMPT TO LLM]
 ======================================================================
 You are analyzing logs to answer a query. Decide the NEXT action.
 
-QUERY: count total number of cpe devices
+QUERY: count unique CM MACs
 ITERATION: 3/10
 
 PREVIOUS ACTIONS:
-  Step 1: grep_logs({'pattern': 'CpeMacAddress'})
-    → [RAW DATA] Found 39 log entries matching 'CpeMacAddress' - may contain duplicates
-  Step 2: extract_unique({'values': ['CpeMacAddress']})
-    → [FINAL] 1 UNIQUE values (deduplicated from 1 raw entries)
+  Step 1: grep_logs({'pattern': 'CmMacAddress'})
+    → [RAW DATA] Found 101 log entries matching 'CmMacAddress' - may contain duplicates
+  Step 2: parse_json_field({'field_name': 'CmMacAddress', 'logs':                           _index  ... _source.container_name_key
+0    logstash-2025-11-05-[12-16]  ...                      testcontainer12
+1    logstash-2025-11-05-[12-16]  ...                      testcontainer12
+2    logstash-2025-11-05-[12-16]  ...                      testcontainer12
+3    logstash-2025-11-05-[12-16]  ...                      testcontainer12
+4    logstash-2025-11-05-[12-16]  ...                      testcontainer12
+..                           ...  ...                        ...
+96   logstash-2025-11-05-[12-16]  ...                      testcontainer12
+97   logstash-2025-11-05-[12-16]  ...                      testcontainer12
+98   logstash-2025-11-05-[12-16]  ...                      testcontainer12
+99   logstash-2025-11-05-[12-16]  ...                      testcontainer12
+100  logstash-2025-11-05-[12-16]  ...                      testcontainer12
+
+[101 rows x 27 columns]})
+    → [RAW DATA] Extracted 47 raw values for 'CmMacAddress' - may contain duplicates
 
 CURRENT STATE:
-  Logs loaded: 39 entries (DataFrame)
+  Logs loaded: 101 entries (DataFrame)
 
-  Sample log structure (showing 2 of 39):
-    Sample 1:
-    {
-      "Role": "active",
-      "Severity": "DEBUG",
-      "Package": "ulc-mulpi",
-      "Version": "1.48-1011.48",
-      "File": "PerfMgr.cpp:1150",
-      "Logger": "ulcmulpid.PerfMgr",
-      "Function": "ProcEvAddCpe",
-      "Message": "ProcEvAddCpe",
-      "CmMacAddress": "c8:63:fc:15:41:6c",
-      "CpeMacAddress": "c8:63:fc:15:41:6e",
-      "ESafeType": "eRouter",
-      "BundleId": "1",
-      "SubBundleId": "0",
-      "NsiVlanId": "50",
-      "DhcpNsiVlanId": "0"
-    }
-    Sample 2:
-    {
-      "Role": "active",
-      "Severity": "DEBUG",
-      "Package": "ulc-mulpi",
-      "Version": "1.48-1011.48",
-      "File": "PerfMgr.cpp:1150",
-      "Logger": "ulcmulpid.PerfMgr",
-      "Function": "ProcEvAddCpe",
-      "Message": "ProcEvAddCpe",
-      "CmMacAddress": "c8:63:fc:15:41:6c",
-      "CpeMacAddress": "c8:63:fc:15:41:6e",
-      "ESafeType": "eRouter",
-      "BundleId": "1",
-      "SubBundleId": "0",
-      "NsiVlanId": "50",
-      "DhcpNsiVlanId": "0"
-    }
+  Extracted fields:
+    - CmMacAddress: 47 raw (may have duplicates) values (in last_result)
 
-  Available fields (grouped by entity):
-    Package: Package
-    CM: CmMacAddress
-    CPE: CpeMacAddress
-    System/Other: Role, Severity, Version, File, Logger (+7 more)
-  ⚠️ Fields are INSIDE logs - use parse_json_field(logs, 'FieldName') to extract values
+  Last result: 47 values (sample: ['b3:f1:7b:9e:92:bc', '3f:b2:1e:4b:fb:3c', 'f7:f9:28:3c:22:45'])
 
-  Last result: 1 values (sample: ['CpeMacAddress'])
-
-  💡 HINT: Query asks for unique CPE values. Available CPE fields: CpeMacAddress. Parse the field that uniquely identifies the entity.
+  💡 HINT: Query needs unique count. Raw values extracted but not deduplicated. Next: count_values(values)
 DECISION POINT:
 - Have enough data? → finalize_answer
 - Need more data? → call next tool
@@ -297,22 +223,105 @@ CRITICAL:
 <think>
 </think>
 
-{"reasoning": "Unique CPE devices counted", "action": "finalize_answer", "params": {"answer": "Total 1 unique CPE device found"}}
+{"reasoning": "Count unique CM MACs", "action": "count_values", "params": {"values": ["b3:f1:7b:9e:92:bc", "3f:b2:1e:4b:fb:3c", "f7:f9:28:3c:22:45"]}}
+======================================================================
+
+[Parsed Decision]
+  Action: count_values
+  Params: {'values': ['b3:f1:7b:9e:92:bc', '3f:b2:1e:4b:fb:3c', 'f7:f9:28:3c:22:45']}
+
+[Tool Result]
+  ✓ [FINAL COUNT] 3 unique values (from 3 total entries)
+
+======================================================================
+ITERATION 4/10
+Query: count unique CM MACs
+======================================================================
+[12/09/25 19:08:06] INFO     Generation successful: 182 chars, took 4.80s
+
+======================================================================
+[FULL PROMPT TO LLM]
+======================================================================
+You are analyzing logs to answer a query. Decide the NEXT action.
+
+QUERY: count unique CM MACs
+ITERATION: 4/10
+
+PREVIOUS ACTIONS:
+  Step 1: grep_logs({'pattern': 'CmMacAddress'})
+    → [RAW DATA] Found 101 log entries matching 'CmMacAddress' - may contain duplicates
+  Step 2: parse_json_field({'field_name': 'CmMacAddress', 'logs':                           _index  ... _source.container_name_key
+0    logstash-2025-11-05-[12-16]  ...                      testcontainer12
+1    logstash-2025-11-05-[12-16]  ...                      testcontainer12
+2    logstash-2025-11-05-[12-16]  ...                      testcontainer12
+3    logstash-2025-11-05-[12-16]  ...                      testcontainer12
+4    logstash-2025-11-05-[12-16]  ...                      testcontainer12
+..                           ...  ...                        ...
+96   logstash-2025-11-05-[12-16]  ...                      testcontainer12
+97   logstash-2025-11-05-[12-16]  ...                      testcontainer12
+98   logstash-2025-11-05-[12-16]  ...                      testcontainer12
+99   logstash-2025-11-05-[12-16]  ...                      testcontainer12
+100  logstash-2025-11-05-[12-16]  ...                      testcontainer12
+
+[101 rows x 27 columns]})
+    → [RAW DATA] Extracted 47 raw values for 'CmMacAddress' - may contain duplicates
+  Step 3: count_values({'values': ['b3:f1:7b:9e:92:bc', '3f:b2:1e:4b:fb:3c', 'f7:f9:28:3c:22:45'], 'logs':                           _index  ... _source.container_name_key
+0    logstash-2025-11-05-[12-16]  ...                      testcontainer12
+1    logstash-2025-11-05-[12-16]  ...                      testcontainer12
+2    logstash-2025-11-05-[12-16]  ...                      testcontainer12
+3    logstash-2025-11-05-[12-16]  ...                      testcontainer12
+4    logstash-2025-11-05-[12-16]  ...                      testcontainer12
+..                           ...  ...                        ...
+96   logstash-2025-11-05-[12-16]  ...                      testcontainer12
+97   logstash-2025-11-05-[12-16]  ...                      testcontainer12
+98   logstash-2025-11-05-[12-16]  ...                      testcontainer12
+99   logstash-2025-11-05-[12-16]  ...                      testcontainer12
+100  logstash-2025-11-05-[12-16]  ...                      testcontainer12
+
+[101 rows x 27 columns]})
+    → [FINAL COUNT] 3 unique values (from 3 total entries)
+
+CURRENT STATE:
+  Logs loaded: 101 entries (DataFrame)
+
+  Extracted fields:
+    - CmMacAddress: 3 UNIQUE values (in last_result)
+DECISION POINT:
+- Have enough data? → finalize_answer
+- Need more data? → call next tool
+
+FORMAT (KEEP BRIEF):
+<think>1-2 sentence max</think>
+{
+  "reasoning": "one sentence",
+  "action": "tool_name",
+  "params": {dict}
+}
+
+CRITICAL:
+- Return JSON ONLY
+
+
+======================================================================
+[FULL LLM RESPONSE]
+======================================================================
+<think>
+</think>
+
+{"reasoning": "Task complete", "action": "finalize_answer", "params": {"answer": "Found 3 unique CM MACs: b3:f1:7b:9e:92:bc, 3f:b2:1e:4b:fb:3c, f7:f9:28:3c:22:45"}}
 ======================================================================
 
 [Parsed Decision]
   Action: finalize_answer
-  Params: {'answer': 'Total 1 unique CPE device found'}
+  Params: {'answer': 'Found 3 unique CM MACs: b3:f1:7b:9e:92:bc, 3f:b2:1e:4b:fb:3c, f7:f9:28:3c:22:45'}
 
-✓ FINAL ANSWER: Total 1 unique CPE device found
+✓ FINAL ANSWER: Found 3 unique CM MACs: b3:f1:7b:9e:92:bc, 3f:b2:1e:4b:fb:3c, f7:f9:28:3c:22:45
 ======================================================================
 
 ======================================================================
 ✓ SUCCESS
-Answer: Total 1 unique CPE device found
-Iterations: 3/10
+Answer: Found 3 unique CM MACs: b3:f1:7b:9e:92:bc, 3f:b2:1e:4b:fb:3c, f7:f9:28:3c:22:45
+Iterations: 4/10
 ======================================================================
 
-Assistant: Total 1 unique CPE device found
-
-You:
+Assistant: Found 3 unique CM MACs: b3:f1:7b:9e:92:bc, 3f:b2:1e:4b:fb:3c, f7:f9:28:3c:22:45
